@@ -90,6 +90,15 @@ impl Point {
     fn dot(&self, other: &Point) -> f64 {
         return self.x * other.x + self.y * other.y + self.z * other.z + self.w * other.w;
     }
+
+    fn cross(&self, other: &Point) -> Point {
+        return Point {
+            x: self.y * other.z - self.z * other.y,
+            y: self.z * other.x - self.x * other.z,
+            z: self.x * other.y - self.y * other.x,
+            w: 0.0,
+        };
+    }
 }
 
 const EPSILON: f64 = 0.00001;
@@ -363,5 +372,34 @@ mod tests {
         };
 
         assert!(equal(a.dot(&b), 20.0));
+    }
+
+    #[test]
+    fn test_cross_product() {
+        let a: Point = Point {
+            x: 1.0,
+            y: 2.0,
+            z: 3.0,
+            w: 0.0,
+        };
+        let b: Point = Point {
+            x: 2.0,
+            y: 3.0,
+            z: 4.0,
+            w: 0.0,
+        };
+
+        assert!(a.cross(&b).equal(&Point {
+            x: -1.0,
+            y: 2.0,
+            z: -1.0,
+            w: 0.0,
+        }));
+        assert!(b.cross(&a).equal(&Point {
+            x: 1.0,
+            y: -2.0,
+            z: 1.0,
+            w: 0.0,
+        }));
     }
 }
