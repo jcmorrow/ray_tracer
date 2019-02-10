@@ -1,3 +1,5 @@
+use utilities::equal;
+
 pub struct Point {
     x: f64,
     y: f64,
@@ -99,11 +101,6 @@ impl Point {
             w: 0.0,
         };
     }
-}
-
-const EPSILON: f64 = 0.00001;
-fn equal(a: f64, b: f64) -> bool {
-    return (a - b).abs() < EPSILON;
 }
 
 #[cfg(test)]
