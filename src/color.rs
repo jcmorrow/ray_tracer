@@ -1,19 +1,24 @@
 use utilities::equal;
 
+#[derive(Copy, Clone)]
 pub struct Color {
-    blue: f64,
-    green: f64,
-    red: f64,
+    pub blue: f64,
+    pub green: f64,
+    pub red: f64,
 }
 
 impl Color {
-    fn equal(&self, other: &Color) -> bool {
+    pub fn new(red: f64, green: f64, blue: f64) -> Color {
+        return Color { red, green, blue };
+    }
+
+    pub fn equal(&self, other: &Color) -> bool {
         return equal(self.red, other.red)
             && equal(self.green, other.green)
             && equal(self.blue, other.blue);
     }
 
-    fn add(&self, other: &Color) -> Color {
+    pub fn add(&self, other: &Color) -> Color {
         return Color {
             blue: self.blue + other.blue,
             green: self.green + other.green,
@@ -21,12 +26,31 @@ impl Color {
         };
     }
 
-    fn hadamard_product(&self, other: &Color) -> Color {
+    pub fn hadamard_product(&self, other: &Color) -> Color {
         return Color {
             blue: self.blue * other.blue,
             green: self.green * other.green,
             red: self.red * other.red,
         };
+    }
+
+    pub fn ppm(&self) -> String {
+        return format!(
+            "{} {} {}",
+            (Color::clamp(self.red) * 255.0).round(),
+            (Color::clamp(self.green) * 255.0).round(),
+            (Color::clamp(self.blue) * 255.0).round()
+        );
+    }
+
+    fn clamp(number: f64) -> f64 {
+        if number > 1.0 {
+            return 1.0;
+        } else if number < 0.0 {
+            return 0.0;
+        } else {
+            return number;
+        }
     }
 }
 

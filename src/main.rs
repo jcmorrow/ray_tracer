@@ -1,3 +1,4 @@
+mod canvas;
 mod color;
 mod point;
 mod utilities;
