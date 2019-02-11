@@ -106,7 +106,7 @@ impl Matrix4 {
 
     pub fn cofactor(&self, col: usize, row: usize) -> f64 {
         let minor = self.minor(col, row);
-        if col + row % 2 == 0 {
+        if (col + row) % 2 == 0 {
             return minor;
         } else {
             return minor * -1.0;
@@ -118,6 +118,28 @@ impl Matrix4 {
         for i in 0..4 {
             result = result + self.members[0][i] * self.cofactor(0, i);
         }
+        result
+    }
+
+    pub fn invertible(&self) -> bool {
+        self.determinant() != 0.0
+    }
+
+    pub fn inverse(&self) -> Matrix4 {
+        if !self.invertible() {
+            panic!("Matrix is not invertible");
+        }
+
+        let mut result = Matrix4::empty();
+        let determinant = self.determinant();
+
+        for row in 0..4 {
+            for col in 0..4 {
+                let mut cofactor = self.cofactor(col, row);
+                result.members[row][col] = cofactor / determinant;
+            }
+        }
+
         result
     }
 }
@@ -467,5 +489,65 @@ mod tests {
         };
 
         assert!(equal(a.determinant(), -196.0));
+    }
+
+    #[test]
+    fn test_matrix_4_invertible() {
+        let a = Matrix4 {
+            members: [
+                [-2.0, -8.0, 3.0, 5.0],
+                [-3.0, 1.0, 7.0, 3.0],
+                [1.0, 2.0, -9.0, 6.0],
+                [-6.0, 7.0, 7.0, -9.0],
+            ],
+        };
+
+        assert!(a.invertible());
+
+        let b = Matrix4 {
+            members: [
+                [-4.0, 2.0, -2.0, -3.0],
+                [9.0, 6.0, 2.0, 6.0],
+                [0.0, -5.0, 1.0, -5.0],
+                [0.0, 0.0, 0.0, 0.0],
+            ],
+        };
+
+        assert!(!b.invertible());
+    }
+
+    #[test]
+    fn test_matrix_4_inverse() {
+        let a = Matrix4 {
+            members: [
+                [-5.0, 2.0, 6.0, -8.0],
+                [1.0, -5.0, 1.0, 8.0],
+                [7.0, 7.0, -6.0, -7.0],
+                [1.0, -3.0, 7.0, 4.0],
+            ],
+        };
+
+        let inverse = Matrix4 {
+            members: [
+                [0.21805, 0.45113, 0.24060, -0.04511],
+                [-0.80827, -1.45677, -0.44361, 0.52068],
+                [-0.07895, -0.22368, -0.05263, 0.19737],
+                [-0.52256, -0.81391, -0.30075, 0.30639],
+            ],
+        };
+
+        assert!(equal(a.determinant(), 532.0));
+        assert!(equal(a.cofactor(2, 3), -160.0));
+        assert!(a.inverse().equal(&inverse));
+
+        let b = Matrix4 {
+            members: [
+                [-2.0, -8.0, 3.0, 5.0],
+                [-3.0, 1.0, 7.0, 3.0],
+                [1.0, 2.0, -9.0, 6.0],
+                [-6.0, 7.0, 7.0, -9.0],
+            ],
+        };
+        assert!(a.multiply(&b).multiply(&b.inverse()).equal(&a));
     }
 }
