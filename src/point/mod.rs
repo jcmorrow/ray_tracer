@@ -15,7 +15,7 @@ pub fn vector(x: f64, y: f64, z: f64) -> Point {
     return Point { x, y, z, w: 0.0 };
 }
 
-fn empty_point() -> Point {
+pub fn empty_point() -> Point {
     return point(0.0, 0.0, 0.0);
 }
 
@@ -32,7 +32,7 @@ impl Point {
         return equal(self.w, 0.0);
     }
 
-    fn equal(&self, other: &Point) -> bool {
+    pub fn equal(&self, other: &Point) -> bool {
         return equal(self.x, other.x)
             && equal(self.y, other.y)
             && equal(self.z, other.z)

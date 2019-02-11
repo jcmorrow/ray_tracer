@@ -3,6 +3,7 @@ use std::io::prelude::*;
 
 mod canvas;
 mod color;
+mod matrix;
 mod point;
 mod utilities;
 

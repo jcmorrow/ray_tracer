@@ -1,5 +1,4 @@
 use color::Color;
-use std::f64;
 use std::vec::Vec;
 
 pub struct Canvas {
