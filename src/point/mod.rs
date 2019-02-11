@@ -1,28 +1,26 @@
 use utilities::equal;
 
 pub struct Point {
-    x: f64,
-    y: f64,
-    z: f64,
-    w: f64,
+    pub x: f64,
+    pub y: f64,
+    pub z: f64,
+    pub w: f64,
 }
 
-fn point() -> Point {
-    return Point {
-        x: 0.0,
-        y: 0.0,
-        z: 0.0,
-        w: 1.0,
-    };
+pub fn point(x: f64, y: f64, z: f64) -> Point {
+    return Point { x, y, z, w: 1.0 };
 }
 
-fn vector() -> Point {
-    return Point {
-        x: 0.0,
-        y: 0.0,
-        z: 0.0,
-        w: 0.0,
-    };
+pub fn vector(x: f64, y: f64, z: f64) -> Point {
+    return Point { x, y, z, w: 0.0 };
+}
+
+fn empty_point() -> Point {
+    return point(0.0, 0.0, 0.0);
+}
+
+fn empty_vector() -> Point {
+    return vector(0.0, 0.0, 0.0);
 }
 
 impl Point {
@@ -41,7 +39,7 @@ impl Point {
             && equal(self.w, other.w);
     }
 
-    fn add(&self, other: &Point) -> Point {
+    pub fn add(&self, other: &Point) -> Point {
         return Point {
             x: self.x + other.x,
             y: self.y + other.y,
@@ -78,14 +76,14 @@ impl Point {
     }
 
     fn negative(&self) -> Point {
-        return vector().sub(&self);
+        return empty_vector().sub(&self);
     }
 
     fn magnitude(&self) -> f64 {
         return (self.x.powi(2) + self.y.powi(2) + self.z.powi(2) + self.w.powi(2)).sqrt();
     }
 
-    fn normalize(&self) -> Point {
+    pub fn normalize(&self) -> Point {
         return self.divide_scalar(self.magnitude());
     }
 
@@ -105,9 +103,9 @@ impl Point {
 
 #[cfg(test)]
 mod tests {
+    use point::empty_point;
+    use point::empty_vector;
     use point::equal;
-    use point::point;
-    use point::vector;
     use point::Point;
 
     #[test]
@@ -146,7 +144,7 @@ mod tests {
 
     #[test]
     fn test_new_point() {
-        let a: Point = point();
+        let a: Point = empty_point();
 
         assert!(equal(a.x, 0.0));
         assert!(equal(a.y, 0.0));
@@ -158,7 +156,7 @@ mod tests {
 
     #[test]
     fn test_new_vector() {
-        let a: Point = vector();
+        let a: Point = empty_vector();
 
         assert!(equal(a.x, 0.0));
         assert!(equal(a.y, 0.0));
@@ -170,16 +168,16 @@ mod tests {
 
     #[test]
     fn test_vector_equality() {
-        let a: Point = vector();
-        let b: Point = vector();
+        let a: Point = empty_vector();
+        let b: Point = empty_vector();
 
         assert!(a.equal(&b));
     }
 
     #[test]
     fn test_point_equality() {
-        let a: Point = point();
-        let b: Point = point();
+        let a: Point = empty_point();
+        let b: Point = empty_point();
 
         assert!(a.equal(&b));
     }

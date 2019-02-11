@@ -1,14 +1,15 @@
 use color::Color;
+use std::f64;
 use std::vec::Vec;
 
-struct Canvas {
-    height: i64,
-    width: i64,
+pub struct Canvas {
+    pub height: i64,
+    pub width: i64,
     pixels: Vec<Color>,
 }
 
 impl Canvas {
-    fn empty(width: i64, height: i64) -> Canvas {
+    pub fn empty(width: i64, height: i64) -> Canvas {
         let mut pixels = Vec::with_capacity((width * height) as usize);
         for _i in 0..(width * height) {
             pixels.push(Color {
@@ -24,9 +25,11 @@ impl Canvas {
         };
     }
 
-    fn write_pixel(&mut self, column: usize, row: usize, color: &Color) {
-        println!("{}", row * self.width as usize + column);
-        self.pixels[row * self.width as usize + column] = *color;
+    pub fn write_pixel(&mut self, column: usize, row: usize, color: &Color) {
+        let index = row * self.width as usize + column;
+        if index < self.pixels.len() {
+            self.pixels[index] = *color;
+        }
     }
 
     fn write_all_pixels(&mut self, color: &Color) {
@@ -37,7 +40,7 @@ impl Canvas {
         self.pixels = pixels;
     }
 
-    fn render_ppm(&self) -> String {
+    pub fn render_ppm(&self) -> String {
         return format!(
             "P3
 {} {}

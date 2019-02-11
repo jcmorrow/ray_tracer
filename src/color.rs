@@ -1,3 +1,4 @@
+use utilities::clamp;
 use utilities::equal;
 
 #[derive(Copy, Clone)]
@@ -37,20 +38,10 @@ impl Color {
     pub fn ppm(&self) -> String {
         return format!(
             "{} {} {}",
-            (Color::clamp(self.red) * 255.0).round(),
-            (Color::clamp(self.green) * 255.0).round(),
-            (Color::clamp(self.blue) * 255.0).round()
+            (clamp(self.red, 0.0, 1.0) * 255.0).round(),
+            (clamp(self.green, 0.0, 1.0) * 255.0).round(),
+            (clamp(self.blue, 0.0, 1.0) * 255.0).round()
         );
-    }
-
-    fn clamp(number: f64) -> f64 {
-        if number > 1.0 {
-            return 1.0;
-        } else if number < 0.0 {
-            return 0.0;
-        } else {
-            return number;
-        }
     }
 }
 
