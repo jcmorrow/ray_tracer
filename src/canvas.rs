@@ -29,6 +29,14 @@ impl Canvas {
         self.pixels[row * self.width as usize + column] = *color;
     }
 
+    fn write_all_pixels(&mut self, color: &Color) {
+        let mut pixels: Vec<Color> = Vec::with_capacity((self.width * self.height) as usize);
+        for _i in 0..(self.width * self.height) {
+            pixels.push(*color);
+        }
+        self.pixels = pixels;
+    }
+
     fn render_ppm(&self) -> String {
         return format!(
             "P3
@@ -48,12 +56,29 @@ impl Canvas {
             for j in 0..self.width {
                 pixels.push(self.pixels[(i * self.width + j) as usize].ppm());
             }
-            rows.push(pixels.join(" "));
+            rows.push(Canvas::chunks(pixels.join(" "), 70).join("\n"));
         }
 
         let mut string = rows.join("\n");
         string.push_str("\n");
         return string;
+    }
+
+    fn chunks(string: String, size: usize) -> Vec<String> {
+        let mut strings: Vec<String> = Vec::new();
+        if string.len() > size {
+            let mut i = size - 1;
+            let string_chars: Vec<char> = string.chars().collect();
+            while string_chars[i] != ' ' {
+                i = i - 1;
+            }
+            let (beginning, end) = string.split_at(i);
+            strings.extend(Canvas::chunks(String::from(beginning), size));
+            strings.push(String::from(end.trim_matches(' ')));
+        } else {
+            strings.push(String::from(string.trim_matches(' ')));
+        }
+        return strings;
     }
 }
 
@@ -104,6 +129,24 @@ mod tests {
 255 0 0 0 0 0 0 0 0 0 0 0 0 0 0
 0 0 0 0 0 0 0 128 0 0 0 0 0 0 0
 0 0 0 0 0 0 0 0 0 0 0 0 0 0 255
+"
+        );
+    }
+
+    #[test]
+    fn test_render_to_ppm_split_long_lines() {
+        let mut canvas = Canvas::empty(10, 2);
+        canvas.write_all_pixels(&Color::new(1.0, 0.8, 0.6));
+
+        assert_eq!(
+            canvas.render_ppm(),
+            "P3
+10 2
+255
+255 204 153 255 204 153 255 204 153 255 204 153 255 204 153 255 204
+153 255 204 153 255 204 153 255 204 153 255 204 153
+255 204 153 255 204 153 255 204 153 255 204 153 255 204 153 255 204
+153 255 204 153 255 204 153 255 204 153 255 204 153
 "
         );
     }
