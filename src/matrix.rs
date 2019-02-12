@@ -3,7 +3,7 @@ use point::Point;
 use utilities::equal;
 
 #[derive(Copy, Clone, Debug)]
-struct Matrix4 {
+pub struct Matrix4 {
     members: [[f64; 4]; 4],
 }
 
@@ -199,7 +199,7 @@ impl Matrix4 {
 }
 
 #[derive(Debug)]
-struct Matrix3 {
+pub struct Matrix3 {
     members: [[f64; 3]; 3],
 }
 
@@ -264,7 +264,7 @@ impl Matrix3 {
 }
 
 #[derive(Debug)]
-struct Matrix2 {
+pub struct Matrix2 {
     members: [[f64; 2]; 2],
 }
 
