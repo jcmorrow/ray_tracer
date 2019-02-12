@@ -143,24 +143,24 @@ impl Matrix4 {
         result
     }
 
-    pub fn translation(&self, x: f64, y: f64, z: f64) -> Matrix4 {
-        let mut result = *self;
+    pub fn translation(x: f64, y: f64, z: f64) -> Matrix4 {
+        let mut result = IDENTITY_MATRIX;
         result.members[0][3] = x;
         result.members[1][3] = y;
         result.members[2][3] = z;
         result
     }
 
-    pub fn scaling(&self, x: f64, y: f64, z: f64) -> Matrix4 {
-        let mut result = *self;
+    pub fn scaling(x: f64, y: f64, z: f64) -> Matrix4 {
+        let mut result = IDENTITY_MATRIX;
         result.members[0][0] = x;
         result.members[1][1] = y;
         result.members[2][2] = z;
         result
     }
 
-    pub fn rotate_x(&self, radians: f64) -> Matrix4 {
-        let mut result = *self;
+    pub fn rotation_x(radians: f64) -> Matrix4 {
+        let mut result = IDENTITY_MATRIX;
         result.members[1][1] = radians.cos();
         result.members[1][2] = -radians.sin();
         result.members[2][1] = radians.sin();
@@ -168,8 +168,8 @@ impl Matrix4 {
         result
     }
 
-    pub fn rotate_y(&self, radians: f64) -> Matrix4 {
-        let mut result = *self;
+    pub fn rotation_y(radians: f64) -> Matrix4 {
+        let mut result = IDENTITY_MATRIX;
         result.members[0][0] = radians.cos();
         result.members[0][2] = radians.sin();
         result.members[2][0] = -radians.sin();
@@ -177,8 +177,8 @@ impl Matrix4 {
         result
     }
 
-    pub fn rotate_z(&self, radians: f64) -> Matrix4 {
-        let mut result = *self;
+    pub fn rotation_z(radians: f64) -> Matrix4 {
+        let mut result = IDENTITY_MATRIX;
         result.members[0][0] = radians.cos();
         result.members[0][1] = -radians.sin();
         result.members[1][0] = radians.sin();
@@ -186,8 +186,8 @@ impl Matrix4 {
         result
     }
 
-    pub fn shearing(&self, xy: f64, xz: f64, yx: f64, yz: f64, zx: f64, zy: f64) -> Matrix4 {
-        let mut result = *self;
+    pub fn shearing(xy: f64, xz: f64, yx: f64, yz: f64, zx: f64, zy: f64) -> Matrix4 {
+        let mut result = IDENTITY_MATRIX;
         result.members[0][1] = xy;
         result.members[0][2] = xz;
         result.members[1][0] = yx;
@@ -609,7 +609,7 @@ mod tests {
 
     #[test]
     fn test_translation() {
-        let transform = IDENTITY_MATRIX.translation(5.0, -3.0, 2.0);
+        let transform = Matrix4::translation(5.0, -3.0, 2.0);
         let p = point(-3.0, 4.0, 5.0);
         let v = vector(-3.0, 4.0, 5.0);
 
@@ -623,7 +623,7 @@ mod tests {
 
     #[test]
     fn test_scaling() {
-        let transform = IDENTITY_MATRIX.scaling(2.0, 3.0, 4.0);
+        let transform = Matrix4::scaling(2.0, 3.0, 4.0);
         let v = vector(-4.0, 6.0, 8.0);
 
         assert!(transform
@@ -637,7 +637,7 @@ mod tests {
 
     #[test]
     fn test_reflection() {
-        let transform = IDENTITY_MATRIX.scaling(-1.0, 1.0, 1.0);
+        let transform = Matrix4::scaling(-1.0, 1.0, 1.0);
         let v = vector(2.0, 3.0, 4.0);
 
         assert!(transform.multiply_point(&v).equal(&vector(-2.0, 3.0, 4.0)));
@@ -645,8 +645,8 @@ mod tests {
 
     #[test]
     fn test_rotation_x() {
-        let half_quarter = IDENTITY_MATRIX.rotate_x(PI / 4.0);
-        let full_quarter = IDENTITY_MATRIX.rotate_x(PI / 2.0);
+        let half_quarter = Matrix4::rotation_x(PI / 4.0);
+        let full_quarter = Matrix4::rotation_x(PI / 2.0);
         let p = point(0.0, 1.0, 0.0);
 
         assert!(half_quarter.multiply_point(&p).equal(&point(
@@ -659,8 +659,8 @@ mod tests {
 
     #[test]
     fn test_rotation_y() {
-        let half_quarter = IDENTITY_MATRIX.rotate_y(PI / 4.0);
-        let full_quarter = IDENTITY_MATRIX.rotate_y(PI / 2.0);
+        let half_quarter = Matrix4::rotation_y(PI / 4.0);
+        let full_quarter = Matrix4::rotation_y(PI / 2.0);
         let p = point(0.0, 0.0, 1.0);
 
         assert!(half_quarter.multiply_point(&p).equal(&point(
@@ -673,8 +673,8 @@ mod tests {
 
     #[test]
     fn test_rotation_z() {
-        let half_quarter = IDENTITY_MATRIX.rotate_z(PI / 4.0);
-        let full_quarter = IDENTITY_MATRIX.rotate_z(PI / 2.0);
+        let half_quarter = Matrix4::rotation_z(PI / 4.0);
+        let full_quarter = Matrix4::rotation_z(PI / 2.0);
         let p = point(0.0, 1.0, 0.0);
 
         assert!(half_quarter.multiply_point(&p).equal(&point(
@@ -689,29 +689,48 @@ mod tests {
 
     #[test]
     fn test_shearing() {
-        let transform = IDENTITY_MATRIX.shearing(1.0, 0.0, 0.0, 0.0, 0.0, 0.0);
+        let transform = Matrix4::shearing(1.0, 0.0, 0.0, 0.0, 0.0, 0.0);
         let p = point(2.0, 3.0, 4.0);
 
         assert!(transform.multiply_point(&p).equal(&point(5.0, 3.0, 4.0)));
 
-        let transform = IDENTITY_MATRIX.shearing(0.0, 1.0, 0.0, 0.0, 0.0, 0.0);
+        let transform = Matrix4::shearing(0.0, 1.0, 0.0, 0.0, 0.0, 0.0);
 
         assert!(transform.multiply_point(&p).equal(&point(6.0, 3.0, 4.0)));
 
-        let transform = IDENTITY_MATRIX.shearing(0.0, 0.0, 1.0, 0.0, 0.0, 0.0);
+        let transform = Matrix4::shearing(0.0, 0.0, 1.0, 0.0, 0.0, 0.0);
 
         assert!(transform.multiply_point(&p).equal(&point(2.0, 5.0, 4.0)));
 
-        let transform = IDENTITY_MATRIX.shearing(0.0, 0.0, 0.0, 1.0, 0.0, 0.0);
+        let transform = Matrix4::shearing(0.0, 0.0, 0.0, 1.0, 0.0, 0.0);
 
         assert!(transform.multiply_point(&p).equal(&point(2.0, 7.0, 4.0)));
 
-        let transform = IDENTITY_MATRIX.shearing(0.0, 0.0, 0.0, 0.0, 1.0, 0.0);
+        let transform = Matrix4::shearing(0.0, 0.0, 0.0, 0.0, 1.0, 0.0);
 
         assert!(transform.multiply_point(&p).equal(&point(2.0, 3.0, 6.0)));
 
-        let transform = IDENTITY_MATRIX.shearing(0.0, 0.0, 0.0, 0.0, 0.0, 1.0);
+        let transform = Matrix4::shearing(0.0, 0.0, 0.0, 0.0, 0.0, 1.0);
 
         assert!(transform.multiply_point(&p).equal(&point(2.0, 3.0, 7.0)));
+    }
+
+    #[test]
+    fn test_chaining_transformations() {
+        let p = point(1.0, 0.0, 1.0);
+        let a = Matrix4::rotation_x(PI / 2.0);
+        let b = Matrix4::scaling(5.0, 5.0, 5.0);
+        let c = Matrix4::translation(10.0, 5.0, 7.0);
+
+        let p2 = a.multiply_point(&p);
+        assert!(p2.equal(&point(1.0, -1.0, 0.0)));
+
+        let p3 = b.multiply_point(&p2);
+        assert!(p3.equal(&point(5.0, -5.0, 0.0)));
+
+        let p4 = c.multiply_point(&p3);
+        assert!(p4.equal(&point(15.0, 0.0, 7.0)));
+
+        assert!(c.multiply(&b).multiply(&a).multiply_point(&p).equal(&p4));
     }
 }
