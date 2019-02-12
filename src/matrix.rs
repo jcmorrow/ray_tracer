@@ -2,12 +2,12 @@ use point::empty_point;
 use point::Point;
 use utilities::equal;
 
-#[derive(Copy, Clone, Debug)]
+#[derive(PartialEq, Copy, Clone, Debug)]
 pub struct Matrix4 {
     members: [[f64; 4]; 4],
 }
 
-const IDENTITY_MATRIX: Matrix4 = Matrix4 {
+pub const IDENTITY_MATRIX: Matrix4 = Matrix4 {
     members: [
         [1.0, 0.0, 0.0, 0.0],
         [0.0, 1.0, 0.0, 0.0],

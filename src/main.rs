@@ -4,6 +4,7 @@ use std::io::prelude::*;
 
 mod canvas;
 mod color;
+mod intersection;
 mod matrix;
 mod point;
 mod ray;
