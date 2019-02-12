@@ -1,4 +1,6 @@
-use std::f64::consts::PI;
+use matrix::Matrix4;
+use sphere::Sphere;
+
 use std::fs::File;
 use std::io::prelude::*;
 
@@ -11,42 +13,39 @@ mod ray;
 mod sphere;
 mod utilities;
 
-fn write_blob(c: &mut canvas::Canvas, x: f64, y: f64, color: &color::Color) {
-    let row = utilities::clamp(x, 0.0, c.width as f64) as usize;
-    let col = utilities::clamp(y, 0.0, c.width as f64) as usize;
-
-    c.write_pixel(row, col, &color);
-    c.write_pixel(row + 1, col, &color);
-    c.write_pixel(row, col + 1, &color);
-    c.write_pixel(row + 1, col + 1, &color);
-    c.write_pixel(row + 2, col, &color);
-    c.write_pixel(row, col + 2, &color);
-    c.write_pixel(row + 2, col + 2, &color);
-}
-
 fn main() -> std::io::Result<()> {
-    let width = 1000;
-    let mut canvas = canvas::Canvas::empty(width, width);
-    let color = color::Color::new(1.0, 1.0, 1.0);
+    let size = 100;
+    let mut canvas = canvas::Canvas::empty(size, size);
 
-    let position = point::point(10.0, 0.0, 0.0);
+    let origin = point::point(0.0, 0.0, -5.0);
+    let wall = point::point(0.0, 0.0, 10.0);
+    let sphere = Sphere {
+        transform: Matrix4::shearing(1.0, 0.0, 0.0, 0.0, 0.0, 0.0),
+    };
 
-    let mut hours: Vec<point::Point> = vec![position; 12];
+    let pixel_size_in_world = 7.0 / size as f64;
+    let x_min = -3.5;
+    let y_max = 3.5;
 
-    let rotation_z = matrix::Matrix4::rotation_z(-PI / 6.0);
-    let translation = matrix::Matrix4::translation(500.0, 500.0, 0.0);
-    let scale = matrix::Matrix4::scaling(25.0, 25.0, 25.0);
-
-    for p in 1..12 {
-        hours[p] = rotation_z.multiply_point(&hours[p - 1]);
+    for y in 0..size {
+        let y_target = y_max - pixel_size_in_world * y as f64;
+        for x in 0..size {
+            let x_target = x_min + pixel_size_in_world * x as f64;
+            let r = ray::Ray {
+                origin: origin,
+                direction: point::vector(x_target, y_target, wall.z),
+            };
+            if r.intersect(sphere).len() > 0 {
+                canvas.write_pixel(
+                    y as usize,
+                    x as usize,
+                    &color::Color::new(1.0, x as f64 / size as f64, y as f64 / size as f64),
+                );
+            }
+        }
     }
 
-    for p in hours {
-        let point = translation.multiply(&scale).multiply_point(&p);
-        write_blob(&mut canvas, point.x, point.y, &color);
-    }
-
-    let mut file = File::create("trajectory.ppm")?;
+    let mut file = File::create("ray_cast.ppm")?;
     file.write_all(&canvas.render_ppm().into_bytes())?;
     Ok(())
 }
