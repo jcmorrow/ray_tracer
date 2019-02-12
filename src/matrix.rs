@@ -2,7 +2,7 @@ use point::empty_point;
 use point::Point;
 use utilities::equal;
 
-#[derive(Debug)]
+#[derive(Copy, Clone, Debug)]
 struct Matrix4 {
     members: [[f64; 4]; 4],
 }
@@ -142,6 +142,60 @@ impl Matrix4 {
 
         result
     }
+
+    pub fn translation(&self, x: f64, y: f64, z: f64) -> Matrix4 {
+        let mut result = *self;
+        result.members[0][3] = x;
+        result.members[1][3] = y;
+        result.members[2][3] = z;
+        result
+    }
+
+    pub fn scaling(&self, x: f64, y: f64, z: f64) -> Matrix4 {
+        let mut result = *self;
+        result.members[0][0] = x;
+        result.members[1][1] = y;
+        result.members[2][2] = z;
+        result
+    }
+
+    pub fn rotate_x(&self, radians: f64) -> Matrix4 {
+        let mut result = *self;
+        result.members[1][1] = radians.cos();
+        result.members[1][2] = -radians.sin();
+        result.members[2][1] = radians.sin();
+        result.members[2][2] = radians.cos();
+        result
+    }
+
+    pub fn rotate_y(&self, radians: f64) -> Matrix4 {
+        let mut result = *self;
+        result.members[0][0] = radians.cos();
+        result.members[0][2] = radians.sin();
+        result.members[2][0] = -radians.sin();
+        result.members[2][2] = radians.cos();
+        result
+    }
+
+    pub fn rotate_z(&self, radians: f64) -> Matrix4 {
+        let mut result = *self;
+        result.members[0][0] = radians.cos();
+        result.members[0][1] = -radians.sin();
+        result.members[1][0] = radians.sin();
+        result.members[1][1] = radians.cos();
+        result
+    }
+
+    pub fn shearing(&self, xy: f64, xz: f64, yx: f64, yz: f64, zx: f64, zy: f64) -> Matrix4 {
+        let mut result = *self;
+        result.members[0][1] = xy;
+        result.members[0][2] = xz;
+        result.members[1][0] = yx;
+        result.members[1][2] = yz;
+        result.members[2][0] = zx;
+        result.members[2][1] = zy;
+        result
+    }
 }
 
 #[derive(Debug)]
@@ -246,6 +300,8 @@ mod tests {
     use matrix::Matrix4;
     use matrix::IDENTITY_MATRIX;
     use point::point;
+    use point::vector;
+    use std::f64::consts::PI;
     use utilities::equal;
 
     #[test]
@@ -549,5 +605,113 @@ mod tests {
             ],
         };
         assert!(a.multiply(&b).multiply(&b.inverse()).equal(&a));
+    }
+
+    #[test]
+    fn test_translation() {
+        let transform = IDENTITY_MATRIX.translation(5.0, -3.0, 2.0);
+        let p = point(-3.0, 4.0, 5.0);
+        let v = vector(-3.0, 4.0, 5.0);
+
+        assert!(transform.multiply_point(&p).equal(&point(2.0, 1.0, 7.0)));
+        assert!(transform
+            .inverse()
+            .multiply_point(&transform.multiply_point(&p))
+            .equal(&p));
+        assert!(transform.multiply_point(&v).equal(&v));
+    }
+
+    #[test]
+    fn test_scaling() {
+        let transform = IDENTITY_MATRIX.scaling(2.0, 3.0, 4.0);
+        let v = vector(-4.0, 6.0, 8.0);
+
+        assert!(transform
+            .multiply_point(&v)
+            .equal(&vector(-8.0, 18.0, 32.0)));
+        assert!(transform
+            .inverse()
+            .multiply_point(&v)
+            .equal(&vector(-2.0, 2.0, 2.0)));
+    }
+
+    #[test]
+    fn test_reflection() {
+        let transform = IDENTITY_MATRIX.scaling(-1.0, 1.0, 1.0);
+        let v = vector(2.0, 3.0, 4.0);
+
+        assert!(transform.multiply_point(&v).equal(&vector(-2.0, 3.0, 4.0)));
+    }
+
+    #[test]
+    fn test_rotation_x() {
+        let half_quarter = IDENTITY_MATRIX.rotate_x(PI / 4.0);
+        let full_quarter = IDENTITY_MATRIX.rotate_x(PI / 2.0);
+        let p = point(0.0, 1.0, 0.0);
+
+        assert!(half_quarter.multiply_point(&p).equal(&point(
+            0.0,
+            2.0_f64.sqrt() / 2.0,
+            2.0_f64.sqrt() / 2.0
+        )));
+        assert!(full_quarter.multiply_point(&p).equal(&point(0.0, 0.0, 1.0)));
+    }
+
+    #[test]
+    fn test_rotation_y() {
+        let half_quarter = IDENTITY_MATRIX.rotate_y(PI / 4.0);
+        let full_quarter = IDENTITY_MATRIX.rotate_y(PI / 2.0);
+        let p = point(0.0, 0.0, 1.0);
+
+        assert!(half_quarter.multiply_point(&p).equal(&point(
+            2.0_f64.sqrt() / 2.0,
+            0.0,
+            2.0_f64.sqrt() / 2.0
+        )));
+        assert!(full_quarter.multiply_point(&p).equal(&point(1.0, 0.0, 0.0)));
+    }
+
+    #[test]
+    fn test_rotation_z() {
+        let half_quarter = IDENTITY_MATRIX.rotate_z(PI / 4.0);
+        let full_quarter = IDENTITY_MATRIX.rotate_z(PI / 2.0);
+        let p = point(0.0, 1.0, 0.0);
+
+        assert!(half_quarter.multiply_point(&p).equal(&point(
+            -2.0_f64.sqrt() / 2.0,
+            2.0_f64.sqrt() / 2.0,
+            0.0,
+        )));
+        assert!(full_quarter
+            .multiply_point(&p)
+            .equal(&point(-1.0, 0.0, 0.0)));
+    }
+
+    #[test]
+    fn test_shearing() {
+        let transform = IDENTITY_MATRIX.shearing(1.0, 0.0, 0.0, 0.0, 0.0, 0.0);
+        let p = point(2.0, 3.0, 4.0);
+
+        assert!(transform.multiply_point(&p).equal(&point(5.0, 3.0, 4.0)));
+
+        let transform = IDENTITY_MATRIX.shearing(0.0, 1.0, 0.0, 0.0, 0.0, 0.0);
+
+        assert!(transform.multiply_point(&p).equal(&point(6.0, 3.0, 4.0)));
+
+        let transform = IDENTITY_MATRIX.shearing(0.0, 0.0, 1.0, 0.0, 0.0, 0.0);
+
+        assert!(transform.multiply_point(&p).equal(&point(2.0, 5.0, 4.0)));
+
+        let transform = IDENTITY_MATRIX.shearing(0.0, 0.0, 0.0, 1.0, 0.0, 0.0);
+
+        assert!(transform.multiply_point(&p).equal(&point(2.0, 7.0, 4.0)));
+
+        let transform = IDENTITY_MATRIX.shearing(0.0, 0.0, 0.0, 0.0, 1.0, 0.0);
+
+        assert!(transform.multiply_point(&p).equal(&point(2.0, 3.0, 6.0)));
+
+        let transform = IDENTITY_MATRIX.shearing(0.0, 0.0, 0.0, 0.0, 0.0, 1.0);
+
+        assert!(transform.multiply_point(&p).equal(&point(2.0, 3.0, 7.0)));
     }
 }
