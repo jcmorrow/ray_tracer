@@ -49,7 +49,7 @@ impl Point {
         };
     }
 
-    fn sub(&self, other: &Point) -> Point {
+    pub fn sub(&self, other: &Point) -> Point {
         return Point {
             x: self.x - other.x,
             y: self.y - other.y,
@@ -58,7 +58,7 @@ impl Point {
         };
     }
 
-    fn multiply_scalar(&self, other: f64) -> Point {
+    pub fn multiply_scalar(&self, other: f64) -> Point {
         return Point {
             x: self.x * other,
             y: self.y * other,
@@ -88,7 +88,7 @@ impl Point {
         return self.divide_scalar(self.magnitude());
     }
 
-    fn dot(&self, other: &Point) -> f64 {
+    pub fn dot(&self, other: &Point) -> f64 {
         return self.x * other.x + self.y * other.y + self.z * other.z + self.w * other.w;
     }
 

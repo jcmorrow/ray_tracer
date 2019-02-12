@@ -6,6 +6,8 @@ mod canvas;
 mod color;
 mod matrix;
 mod point;
+mod ray;
+mod sphere;
 mod utilities;
 
 fn write_blob(c: &mut canvas::Canvas, x: f64, y: f64, color: &color::Color) {
