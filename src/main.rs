@@ -1,3 +1,4 @@
+use material::Material;
 use matrix::Matrix4;
 use sphere::Sphere;
 
@@ -7,8 +8,10 @@ use std::io::prelude::*;
 mod canvas;
 mod color;
 mod intersection;
+mod material;
 mod matrix;
 mod point;
+mod point_light;
 mod ray;
 mod sphere;
 mod utilities;
@@ -21,6 +24,7 @@ fn main() -> std::io::Result<()> {
     let wall = point::point(0.0, 0.0, 10.0);
     let sphere = Sphere {
         transform: Matrix4::translation(0.0, 0.0, 0.0),
+        material: Material::new(),
     };
 
     let pixel_size_in_world = 7.0 / size as f64;

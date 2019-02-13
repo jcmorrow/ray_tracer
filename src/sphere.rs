@@ -1,3 +1,4 @@
+use material::Material;
 use matrix::Matrix4;
 use matrix::IDENTITY_MATRIX;
 use point::point;
@@ -6,12 +7,14 @@ use point::Point;
 #[derive(PartialEq, Debug, Copy, Clone)]
 pub struct Sphere {
     pub transform: Matrix4,
+    pub material: Material,
 }
 
 impl Sphere {
     pub fn new() -> Sphere {
         Sphere {
             transform: IDENTITY_MATRIX,
+            material: Material::new(),
         }
     }
 
@@ -30,6 +33,7 @@ impl Sphere {
 
 #[cfg(test)]
 mod tests {
+    use material::Material;
     use matrix::Matrix4;
     use matrix::IDENTITY_MATRIX;
     use point::point;
@@ -47,7 +51,10 @@ mod tests {
     #[test]
     fn test_sphere_with_non_default_transform() {
         let t = Matrix4::translation(2.0, 3.0, 4.0);
-        let s = Sphere { transform: t };
+        let s = Sphere {
+            transform: t,
+            material: Material::new(),
+        };
 
         assert_eq!(s.transform, t);
     }
@@ -76,6 +83,7 @@ mod tests {
     fn test_sphere_normal_at_with_transformation() {
         let s = Sphere {
             transform: Matrix4::translation(0.0, 1.0, 0.0),
+            material: Material::new(),
         };
 
         assert!(s
@@ -84,6 +92,7 @@ mod tests {
 
         let s = Sphere {
             transform: Matrix4::scaling(1.0, 0.5, 1.0).multiply(&Matrix4::rotation_z(PI / 5.0)),
+            material: Material::new(),
         };
 
         assert!(s

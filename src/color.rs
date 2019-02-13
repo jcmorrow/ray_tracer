@@ -1,7 +1,7 @@
 use utilities::clamp;
 use utilities::equal;
 
-#[derive(Copy, Clone)]
+#[derive(Copy, Clone, PartialEq, Debug)]
 pub struct Color {
     pub blue: f64,
     pub green: f64,

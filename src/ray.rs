@@ -48,6 +48,7 @@ impl Ray {
 
 #[cfg(test)]
 mod tests {
+    use material::Material;
     use matrix::Matrix4;
     use point::point;
     use point::vector;
@@ -180,6 +181,7 @@ mod tests {
         };
         let s = Sphere {
             transform: Matrix4::scaling(2.0, 2.0, 2.0),
+            material: Material::new(),
         };
 
         let xs = r.intersect(s);
@@ -197,6 +199,7 @@ mod tests {
         };
         let s = Sphere {
             transform: Matrix4::translation(5.0, 0.0, 0.0),
+            material: Material::new(),
         };
 
         let xs = r.intersect(s);
