@@ -20,7 +20,7 @@ fn main() -> std::io::Result<()> {
     let origin = point::point(0.0, 0.0, -5.0);
     let wall = point::point(0.0, 0.0, 10.0);
     let sphere = Sphere {
-        transform: Matrix4::shearing(1.0, 0.0, 0.0, 0.0, 0.0, 0.0),
+        transform: Matrix4::translation(0.0, 0.0, 0.0),
     };
 
     let pixel_size_in_world = 7.0 / size as f64;
