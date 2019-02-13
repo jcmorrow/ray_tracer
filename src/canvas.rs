@@ -109,7 +109,7 @@ mod tests {
 
         canvas.write_pixel(2, 3, &red);
 
-        assert!(canvas.pixels[32].equal(&red));
+        assert_eq!(canvas.pixels[32], red);
     }
 
     #[test]

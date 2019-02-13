@@ -4,7 +4,7 @@ use matrix::IDENTITY_MATRIX;
 use point::point;
 use point::Point;
 
-#[derive(PartialEq, Debug, Copy, Clone)]
+#[derive(Debug, Copy, Clone)]
 pub struct Sphere {
     pub transform: Matrix4,
     pub material: Material,
@@ -28,6 +28,12 @@ impl Sphere {
             .multiply_point(&object_normal);
         world_normal.w = 0.0;
         world_normal.normalize()
+    }
+}
+
+impl PartialEq for Sphere {
+    fn eq(&self, other: &Sphere) -> bool {
+        self.transform.equal(&other.transform) && self.material.equal(self.material)
     }
 }
 

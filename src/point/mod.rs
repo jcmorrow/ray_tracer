@@ -416,8 +416,8 @@ mod tests {
         assert!(v.reflect(&n).equal(&vector(1.0, 1.0, 0.0)));
 
         let v = vector(0.0, -1.0, 0.0);
-        let sqrt_2_over_two = 2.0_f64.sqrt() / 2.0;
-        let n = vector(sqrt_2_over_two, sqrt_2_over_two, 0.0);
+        let sqrt_2_over_2 = 2.0_f64.sqrt() / 2.0;
+        let n = vector(sqrt_2_over_2, sqrt_2_over_2, 0.0);
 
         assert!(v.reflect(&n).equal(&vector(1.0, 0.0, 0.0)));
     }

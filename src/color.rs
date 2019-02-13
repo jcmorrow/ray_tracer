@@ -1,7 +1,7 @@
 use utilities::clamp;
 use utilities::equal;
 
-#[derive(Copy, Clone, PartialEq, Debug)]
+#[derive(Copy, Clone, Debug)]
 pub struct Color {
     pub blue: f64,
     pub green: f64,
@@ -13,10 +13,8 @@ impl Color {
         return Color { red, green, blue };
     }
 
-    pub fn equal(&self, other: &Color) -> bool {
-        return equal(self.red, other.red)
-            && equal(self.green, other.green)
-            && equal(self.blue, other.blue);
+    pub fn black() -> Color {
+        Color::new(0.0, 0.0, 0.0)
     }
 
     pub fn add(&self, other: &Color) -> Color {
@@ -35,6 +33,14 @@ impl Color {
         };
     }
 
+    pub fn multiply_scalar(&self, factor: f64) -> Color {
+        return Color {
+            blue: self.blue * factor,
+            green: self.green * factor,
+            red: self.red * factor,
+        };
+    }
+
     pub fn ppm(&self) -> String {
         return format!(
             "{} {} {}",
@@ -42,6 +48,14 @@ impl Color {
             (clamp(self.green, 0.0, 1.0) * 255.0).round(),
             (clamp(self.blue, 0.0, 1.0) * 255.0).round()
         );
+    }
+}
+
+impl PartialEq for Color {
+    fn eq(&self, other: &Color) -> bool {
+        return equal(self.red, other.red)
+            && equal(self.green, other.green)
+            && equal(self.blue, other.blue);
     }
 }
 
@@ -75,11 +89,14 @@ mod tests {
             blue: 0.25,
         };
 
-        assert!(a.add(&b).equal(&Color {
-            red: 1.6,
-            green: 0.7,
-            blue: 1.0
-        }))
+        assert_eq!(
+            a.add(&b),
+            Color {
+                red: 1.6,
+                green: 0.7,
+                blue: 1.0
+            }
+        );
     }
 
     #[test]
@@ -95,10 +112,13 @@ mod tests {
             blue: 0.1,
         };
 
-        assert!(a.hadamard_product(&b).equal(&Color {
-            red: 0.9,
-            green: 0.2,
-            blue: 0.04,
-        }))
+        assert_eq!(
+            a.hadamard_product(&b),
+            Color {
+                red: 0.9,
+                green: 0.2,
+                blue: 0.04,
+            }
+        )
     }
 }
