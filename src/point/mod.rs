@@ -100,6 +100,14 @@ impl Point {
             w: 0.0,
         };
     }
+
+    pub fn reflect(&self, normal: &Point) -> Point {
+        self.sub(
+            &normal
+                .multiply_scalar(2.0)
+                .multiply_scalar(self.dot(normal)),
+        )
+    }
 }
 
 #[cfg(test)]
@@ -107,6 +115,7 @@ mod tests {
     use point::empty_point;
     use point::empty_vector;
     use point::equal;
+    use point::vector;
     use point::Point;
 
     #[test]
@@ -397,5 +406,19 @@ mod tests {
             z: 1.0,
             w: 0.0,
         }));
+    }
+
+    #[test]
+    fn test_reflect() {
+        let v = vector(1.0, -1.0, 0.0);
+        let n = vector(0.0, 1.0, 0.0);
+
+        assert!(v.reflect(&n).equal(&vector(1.0, 1.0, 0.0)));
+
+        let v = vector(0.0, -1.0, 0.0);
+        let sqrt_2_over_two = 2.0_f64.sqrt() / 2.0;
+        let n = vector(sqrt_2_over_two, sqrt_2_over_two, 0.0);
+
+        assert!(v.reflect(&n).equal(&vector(1.0, 0.0, 0.0)));
     }
 }
