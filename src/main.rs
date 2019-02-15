@@ -19,6 +19,7 @@ mod point_light;
 mod ray;
 mod sphere;
 mod utilities;
+mod world;
 
 fn main() -> std::io::Result<()> {
     let size = 300;

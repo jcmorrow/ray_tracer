@@ -3,6 +3,7 @@ use matrix::Matrix4;
 use point::point;
 use point::Point;
 use sphere::Sphere;
+use world::World;
 
 pub struct Ray {
     pub origin: Point,
@@ -38,6 +39,15 @@ impl Ray {
         }
     }
 
+    pub fn intersect_world(&self, world: &World) -> Vec<Intersection> {
+        let mut intersections: Vec<Intersection> = Vec::new();
+        for object in &world.objects {
+            intersections.extend(self.intersect(*object));
+        }
+        intersections.sort_by(|a, b| a.t.partial_cmp(&b.t).unwrap());
+        intersections
+    }
+
     pub fn transform(&self, transformation: Matrix4) -> Ray {
         Ray {
             origin: transformation.multiply_point(&self.origin),
@@ -54,6 +64,7 @@ mod tests {
     use point::vector;
     use ray::Ray;
     use sphere::Sphere;
+    use world::World;
 
     #[test]
     fn test_ray_creation() {
@@ -205,5 +216,21 @@ mod tests {
         let xs = r.intersect(s);
 
         assert_eq!(xs.len(), 0);
+    }
+
+    #[test]
+    fn test_ray_intersect_world() {
+        let r = Ray {
+            origin: point(0.0, 0.0, -5.0),
+            direction: vector(0.0, 0.0, 1.0),
+        };
+        let world = World::new();
+        let intersections = r.intersect_world(&world);
+
+        assert_eq!(intersections.len(), 4);
+        assert_eq!(intersections[0].t, 4.0);
+        assert_eq!(intersections[1].t, 4.5);
+        assert_eq!(intersections[2].t, 5.5);
+        assert_eq!(intersections[3].t, 6.0);
     }
 }
