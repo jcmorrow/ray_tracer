@@ -18,6 +18,7 @@ mod point;
 mod point_light;
 mod ray;
 mod sphere;
+mod transformation_matrix;
 mod utilities;
 mod world;
 

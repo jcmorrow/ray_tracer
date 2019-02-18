@@ -123,7 +123,7 @@ mod tests {
 
     #[test]
     fn test_world_color_at() {
-        let mut world = World::new();
+        let world = World::new();
         let r = Ray {
             origin: point(0.0, 0.0, -5.0),
             direction: vector(0.0, 1.0, 0.0),
@@ -134,7 +134,7 @@ mod tests {
 
     #[test]
     fn test_world_color_at_2() {
-        let mut world = World::new();
+        let world = World::new();
         let r = Ray {
             origin: point(0.0, 0.0, -5.0),
             direction: vector(0.0, 0.0, 1.0),
