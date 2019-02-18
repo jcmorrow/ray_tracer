@@ -8,6 +8,12 @@ pub struct Point {
     pub w: f64,
 }
 
+impl PartialEq for Point {
+    fn eq(&self, other: &Point) -> bool {
+        return equal(self.x, other.x) && equal(self.y, other.x) && equal(self.z, other.z);
+    }
+}
+
 pub fn point(x: f64, y: f64, z: f64) -> Point {
     return Point { x, y, z, w: 1.0 };
 }

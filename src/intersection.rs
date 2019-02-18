@@ -1,8 +1,20 @@
+use point::Point;
+use ray::Ray;
 use sphere::Sphere;
 
 #[derive(Copy, Clone, Debug, PartialEq)]
 pub struct Intersection {
     pub object: Sphere,
+    pub t: f64,
+}
+
+#[derive(Debug, PartialEq)]
+pub struct Precompute {
+    pub eyev: Point,
+    pub inside: bool,
+    pub normalv: Point,
+    pub object: Sphere,
+    pub point: Point,
     pub t: f64,
 }
 
@@ -24,11 +36,32 @@ impl Intersection {
         }
         return None;
     }
+
+    pub fn precompute(&self, ray: &Ray) -> Precompute {
+        let point = ray.position(self.t);
+        let mut precompute = Precompute {
+            eyev: ray.direction.multiply_scalar(-1.0),
+            inside: false,
+            normalv: self.object.normal_at(&point),
+            object: self.object,
+            point: point,
+            t: self.t,
+        };
+        if precompute.normalv.dot(&precompute.eyev) < 0.0 {
+            precompute.inside = true;
+            precompute.normalv = precompute.normalv.multiply_scalar(-1.0);
+        }
+        precompute
+    }
 }
 
 #[cfg(test)]
 mod tests {
     use intersection::Intersection;
+    use intersection::Precompute;
+    use point::point;
+    use point::vector;
+    use ray::Ray;
     use sphere::Sphere;
     use utilities::equal;
 
@@ -84,5 +117,59 @@ mod tests {
         let hit = Intersection::hit(&mut vec![i1, i2]);
 
         assert_eq!(hit, None);
+    }
+
+    #[test]
+    fn test_precompute_intersection() {
+        let r = Ray {
+            origin: point(0.0, 0.0, -5.0),
+            direction: vector(0.0, 0.0, 1.0),
+        };
+        let sphere = Sphere::new();
+        let i = Intersection {
+            object: sphere,
+            t: 4.0,
+        };
+
+        let precompute = i.precompute(&r);
+
+        assert_eq!(
+            precompute,
+            Precompute {
+                eyev: vector(0.0, 0.0, -1.0),
+                inside: false,
+                normalv: vector(0.0, 0.0, -1.0),
+                object: sphere,
+                point: point(0.0, 0.0, -1.0),
+                t: i.t,
+            }
+        );
+    }
+
+    #[test]
+    fn test_precompute_intersection_inside() {
+        let r = Ray {
+            origin: point(0.0, 0.0, 0.0),
+            direction: vector(0.0, 0.0, 1.0),
+        };
+        let sphere = Sphere::new();
+        let i = Intersection {
+            object: sphere,
+            t: 1.0,
+        };
+
+        let precompute = i.precompute(&r);
+
+        assert_eq!(
+            precompute,
+            Precompute {
+                eyev: vector(0.0, 0.0, -1.0),
+                inside: true,
+                normalv: vector(0.0, 0.0, -1.0),
+                object: sphere,
+                point: point(0.0, 0.0, 1.0),
+                t: i.t,
+            }
+        );
     }
 }
