@@ -10,7 +10,7 @@ pub struct Point {
 
 impl PartialEq for Point {
     fn eq(&self, other: &Point) -> bool {
-        return equal(self.x, other.x) && equal(self.y, other.x) && equal(self.z, other.z);
+        return equal(self.x, other.x) && equal(self.y, other.y) && equal(self.z, other.z);
     }
 }
 

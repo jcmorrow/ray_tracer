@@ -31,6 +31,11 @@ impl Canvas {
         }
     }
 
+    pub fn pixel_at(&self, column: usize, row: usize) -> Color {
+        let index = row * self.width as usize + column;
+        self.pixels[index]
+    }
+
     fn write_all_pixels(&mut self, color: &Color) {
         let mut pixels: Vec<Color> = Vec::with_capacity((self.width * self.height) as usize);
         for _i in 0..(self.width * self.height) {

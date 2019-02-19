@@ -9,6 +9,7 @@ use sphere::Sphere;
 use std::fs::File;
 use std::io::prelude::*;
 
+mod camera;
 mod canvas;
 mod color;
 mod intersection;
