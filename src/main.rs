@@ -1,3 +1,4 @@
+use camera::Camera;
 use color::Color;
 use intersection::Intersection;
 use material::Material;
@@ -5,7 +6,10 @@ use matrix::Matrix4;
 use point::point;
 use point_light::PointLight;
 use sphere::Sphere;
+use transformation_matrix::TransformationMatrix;
+use world::World;
 
+use std::f64::consts::PI;
 use std::fs::File;
 use std::io::prelude::*;
 
@@ -24,44 +28,40 @@ mod utilities;
 mod world;
 
 fn main() -> std::io::Result<()> {
-    let size = 300;
-    let mut canvas = canvas::Canvas::empty(size, size);
+    let mut world = World::new();
 
-    let origin = point(0.0, 0.0, -5.0);
-    let wall = point(0.0, 0.0, 10.0);
-    let mut sphere = Sphere {
-        transform: Matrix4::translation(0.0, 0.0, 0.0),
-        material: Material::new(),
-    };
-    let light = PointLight {
-        intensity: Color::new(1.0, 1.0, 1.0),
-        position: point(-10.0, 10.0, -10.0),
-    };
-    sphere.material.color = Color::new(1.0, 0.2, 1.0);
+    let mut material = Material::new();
+    material.color = Color::new(1.0, 0.9, 0.9);
 
-    let pixel_size_in_world = 7.0 / size as f64;
-    let x_min = -3.5;
-    let y_max = 3.5;
+    let mut floor = Sphere::new();
+    floor.transform =
+        Matrix4::translation(0.0, -1.0, 0.0).multiply(&Matrix4::scaling(10.0, 0.01, 10.0));
+    floor.material = material;
+    world.objects.push(floor);
 
-    for y in 0..size {
-        let y_target = y_max - pixel_size_in_world * y as f64;
-        for x in 0..size {
-            let x_target = x_min + pixel_size_in_world * x as f64;
-            let r = ray::Ray {
-                origin: origin,
-                direction: point::vector(x_target, y_target, wall.z).normalize(),
-            };
-            let mut hits = r.intersect(sphere);
-            if hits.len() > 0 {
-                let hit = Intersection::hit(&mut hits).unwrap();
-                let point = r.position(hit.t);
-                let normal = hit.object.normal_at(&point);
-                let eye = r.direction.multiply_scalar(-1.0);
-                let color = hit.object.material.lighting(&light, &point, &eye, &normal);
-                canvas.write_pixel(y as usize, x as usize, &color);
-            }
-        }
-    }
+    let mut left_wall = Sphere::new();
+    left_wall.transform = Matrix4::translation(0.0, 0.0, 5.0)
+        .multiply(&Matrix4::rotation_y(-PI / 4.0))
+        .multiply(&Matrix4::rotation_x(PI / 2.0))
+        .multiply(&Matrix4::scaling(10.0, 0.01, 10.0));
+    left_wall.material = material;
+    world.objects.push(left_wall);
+
+    let mut right_wall = Sphere::new();
+    right_wall.transform = Matrix4::translation(0.0, 0.0, 5.0)
+        .multiply(&Matrix4::rotation_y(PI / 4.0))
+        .multiply(&Matrix4::rotation_x(PI / 2.0))
+        .multiply(&Matrix4::scaling(10.0, 0.01, 10.0));
+    right_wall.material = material;
+    world.objects.push(right_wall);
+
+    let mut camera = Camera::new(200, 100, PI / 3.0);
+    let from = point(0.0, 1.5, -5.0);
+    let to = point(0.0, 1.0, 0.0);
+    let up = point(0.0, 1.0, 0.0);
+    camera.transform = TransformationMatrix::new(&from, &to, &up);
+
+    let canvas = camera.render(&world);
 
     let mut file = File::create("ray_cast.ppm")?;
     file.write_all(&canvas.render_ppm().into_bytes())?;

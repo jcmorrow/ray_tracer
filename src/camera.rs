@@ -57,7 +57,7 @@ impl Camera {
         };
     }
 
-    pub fn render(&self, world: World) -> Canvas {
+    pub fn render(&self, world: &World) -> Canvas {
         let mut canvas = Canvas::empty(self.hsize as i64, self.vsize as i64);
 
         for x in 0..self.hsize - 1 {
@@ -142,7 +142,7 @@ mod tests {
         let up = point(0.0, 1.0, 0.0);
         camera.transform = TransformationMatrix::new(&from, &to, &up);
 
-        let image = camera.render(world);
+        let image = camera.render(&world);
         assert_eq!(image.pixel_at(5, 5), Color::new(0.38066, 0.47583, 0.2855));
     }
 }
