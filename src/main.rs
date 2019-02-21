@@ -2,25 +2,27 @@ use camera::Camera;
 use color::Color;
 use material::Material;
 use matrix::Matrix4;
+use pattern::StripePattern;
 use point::point;
-use sphere::Sphere;
-use transformation_matrix::TransformationMatrix;
-use world::World;
-
+use shape::Shape;
 use std::f64::consts::PI;
 use std::fs::File;
 use std::io::prelude::*;
+use transformation_matrix::TransformationMatrix;
+use world::World;
 
 mod camera;
 mod canvas;
 mod color;
+mod intersectable;
 mod intersection;
 mod material;
 mod matrix;
+mod pattern;
 mod point;
 mod point_light;
 mod ray;
-mod sphere;
+mod shape;
 mod transformation_matrix;
 mod utilities;
 mod world;
@@ -29,33 +31,15 @@ fn main() -> std::io::Result<()> {
     let mut world = World::new();
 
     let mut material = Material::new();
-    material.color = Color::new(1.0, 0.9, 0.9);
+    material.pattern = Box::new(StripePattern::new(Color::black(), Color::white()));
 
-    let mut floor = Sphere::new();
-    floor.transform =
-        Matrix4::translation(0.0, -1.0, 0.0).multiply(&Matrix4::scaling(10.0, 0.01, 10.0));
-    floor.material = material;
+    let mut floor = Shape::plane();
+    floor.transform = Matrix4::translation(0.0, -1.0, 0.0);
     world.objects.push(floor);
 
-    let mut left_wall = Sphere::new();
-    left_wall.transform = Matrix4::translation(0.0, 0.0, 5.0)
-        .multiply(&Matrix4::rotation_y(-PI / 4.0))
-        .multiply(&Matrix4::rotation_x(PI / 2.0))
-        .multiply(&Matrix4::scaling(10.0, 0.01, 10.0));
-    left_wall.material = material;
-    world.objects.push(left_wall);
-
-    let mut right_wall = Sphere::new();
-    right_wall.transform = Matrix4::translation(0.0, 0.0, 5.0)
-        .multiply(&Matrix4::rotation_y(PI / 4.0))
-        .multiply(&Matrix4::rotation_x(PI / 2.0))
-        .multiply(&Matrix4::scaling(10.0, 0.01, 10.0));
-    right_wall.material = material;
-    world.objects.push(right_wall);
-
-    let mut camera = Camera::new(400, 300, PI / 3.0);
+    let mut camera = Camera::new(200, 100, PI / 3.0);
     let from = point(0.0, 1.5, -5.0);
-    let to = point(0.0, 1.0, 0.0);
+    let to = point(0.0, 0.0, 0.0);
     let up = point(0.0, 1.0, 0.0);
     camera.transform = TransformationMatrix::new(&from, &to, &up);
 

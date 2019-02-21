@@ -1,17 +1,19 @@
 use color::Color;
+use intersectable::Sphere;
 use intersection::Intersection;
 use intersection::Precompute;
 use material::Material;
 use matrix::Matrix4;
 use matrix::IDENTITY_MATRIX;
+use pattern::SolidPattern;
 use point::point;
 use point::Point;
 use point_light::PointLight;
 use ray::Ray;
-use sphere::Sphere;
+use shape::Shape;
 
 pub struct World {
-    pub objects: Vec<Sphere>,
+    pub objects: Vec<Shape>,
     pub light_source: PointLight,
 }
 
@@ -19,17 +21,19 @@ impl World {
     pub fn new() -> World {
         return World {
             objects: vec![
-                Sphere {
+                Shape {
+                    intersectable: Box::new(Sphere {}),
                     transform: IDENTITY_MATRIX,
                     material: Material {
                         ambient: 0.1,
-                        color: Color::new(0.8, 1.0, 0.6),
                         diffuse: 0.7,
                         shininess: 200.0,
                         specular: 0.2,
+                        pattern: Box::new(SolidPattern::new(Color::white())),
                     },
                 },
-                Sphere {
+                Shape {
+                    intersectable: Box::new(Sphere {}),
                     material: Material::new(),
                     transform: Matrix4::scaling(0.5, 0.5, 0.5),
                 },
@@ -108,7 +112,7 @@ mod tests {
             direction: vector(0.0, 0.0, 1.0),
         };
         let i = Intersection {
-            object: default_world.objects[0],
+            object: default_world.objects[0].clone(),
             t: 4.0,
         };
         let comps = i.precompute(&r);
@@ -129,7 +133,7 @@ mod tests {
             direction: vector(0.0, 0.0, 1.0),
         };
         let i = Intersection {
-            object: world.objects[1],
+            object: world.objects[1].clone(),
             t: 0.5,
         };
         let comps = i.precompute(&r);

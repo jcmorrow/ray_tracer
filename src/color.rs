@@ -13,6 +13,10 @@ impl Color {
         return Color { red, green, blue };
     }
 
+    pub fn white() -> Color {
+        Color::new(1.0, 1.0, 1.0)
+    }
+
     pub fn black() -> Color {
         Color::new(0.0, 0.0, 0.0)
     }

@@ -1,8 +1,7 @@
 use intersection::Intersection;
 use matrix::Matrix4;
-use point::point;
 use point::Point;
-use sphere::Sphere;
+use shape::Shape;
 use world::World;
 
 pub struct Ray {
@@ -15,34 +14,15 @@ impl Ray {
         self.origin.add(&self.direction.multiply_scalar(t))
     }
 
-    pub fn intersect(&self, sphere: Sphere) -> Vec<Intersection> {
-        let ray = self.transform(sphere.transform.inverse());
-        let sphere_to_ray = ray.origin.sub(&point(0.0, 0.0, 0.0));
-        let a = ray.direction.dot(&ray.direction);
-        let b = ray.direction.dot(&sphere_to_ray) * 2.0;
-        let c = sphere_to_ray.dot(&sphere_to_ray) - 1.0;
-
-        let discriminant = b.powi(2) - 4.0 * a * c;
-        if discriminant < 0.0 {
-            return Vec::new();
-        } else {
-            return Intersection::intersections(
-                Intersection {
-                    t: (-b - discriminant.sqrt()) / (2.0 * a),
-                    object: sphere,
-                },
-                Intersection {
-                    t: (-b + discriminant.sqrt()) / (2.0 * a),
-                    object: sphere,
-                },
-            );
-        }
+    pub fn intersect(&self, shape: &Shape) -> Vec<Intersection> {
+        let ray = self.transform(shape.transform.inverse());
+        return shape.intersectable.local_intersect(&ray, shape);
     }
 
     pub fn intersect_world(&self, world: &World) -> Vec<Intersection> {
         let mut intersections: Vec<Intersection> = Vec::new();
         for object in &world.objects {
-            intersections.extend(self.intersect(*object));
+            intersections.extend(self.intersect(object));
         }
         intersections.sort_by(|a, b| a.t.partial_cmp(&b.t).unwrap());
         intersections
@@ -58,12 +38,13 @@ impl Ray {
 
 #[cfg(test)]
 mod tests {
+    use intersectable::Sphere;
     use material::Material;
     use matrix::Matrix4;
     use point::point;
     use point::vector;
     use ray::Ray;
-    use sphere::Sphere;
+    use shape::Shape;
     use world::World;
 
     #[test]
@@ -91,13 +72,13 @@ mod tests {
     }
 
     #[test]
-    fn test_ray_intersects_sphere() {
+    fn test_ray_intersects_shape() {
         let ray = Ray {
             origin: point(0.0, 0.0, -5.0),
             direction: vector(0.0, 0.0, 1.0),
         };
-        let s = Sphere::new();
-        let xs = ray.intersect(s);
+        let s = Shape::sphere();
+        let xs = ray.intersect(&s);
 
         assert_eq!(xs.len(), 2);
         assert_eq!(xs[0].t, 4.0);
@@ -105,13 +86,13 @@ mod tests {
     }
 
     #[test]
-    fn test_ray_intersects_sphere_tangent() {
+    fn test_ray_intersects_shape_tangent() {
         let ray = Ray {
             origin: point(0.0, 1.0, -5.0),
             direction: vector(0.0, 0.0, 1.0),
         };
-        let s = Sphere::new();
-        let xs = ray.intersect(s);
+        let s = Shape::sphere();
+        let xs = ray.intersect(&s);
 
         assert_eq!(xs.len(), 2);
         assert_eq!(xs[0].t, 5.0);
@@ -119,25 +100,25 @@ mod tests {
     }
 
     #[test]
-    fn test_ray_misses_sphere() {
+    fn test_ray_misses_shape() {
         let ray = Ray {
             origin: point(0.0, 2.0, -5.0),
             direction: vector(0.0, 0.0, 1.0),
         };
-        let s = Sphere::new();
-        let xs = ray.intersect(s);
+        let s = Shape::sphere();
+        let xs = ray.intersect(&s);
 
         assert_eq!(xs.len(), 0);
     }
 
     #[test]
-    fn test_ray_originates_inside_of_sphere() {
+    fn test_ray_originates_inside_of_shape() {
         let ray = Ray {
             origin: point(0.0, 0.0, 0.0),
             direction: vector(0.0, 0.0, 1.0),
         };
-        let s = Sphere::new();
-        let xs = ray.intersect(s);
+        let s = Shape::sphere();
+        let xs = ray.intersect(&s);
 
         assert_eq!(xs.len(), 2);
         assert_eq!(xs[0].t, -1.0);
@@ -145,13 +126,13 @@ mod tests {
     }
 
     #[test]
-    fn test_ray_ahead_of_sphere() {
+    fn test_ray_ahead_of_shape() {
         let ray = Ray {
             origin: point(0.0, 0.0, 5.0),
             direction: vector(0.0, 0.0, 1.0),
         };
-        let s = Sphere::new();
-        let xs = ray.intersect(s);
+        let s = Shape::sphere();
+        let xs = ray.intersect(&s);
 
         assert_eq!(xs.len(), 2);
         assert_eq!(xs[0].t, -6.0);
@@ -185,17 +166,18 @@ mod tests {
     }
 
     #[test]
-    fn test_ray_intersects_scaled_sphere() {
+    fn test_ray_intersects_scaled_shape() {
         let r = Ray {
             origin: point(0.0, 0.0, -5.0),
             direction: vector(0.0, 0.0, 1.0),
         };
-        let s = Sphere {
+        let s = Shape {
             transform: Matrix4::scaling(2.0, 2.0, 2.0),
             material: Material::new(),
+            intersectable: Box::new(Sphere {}),
         };
 
-        let xs = r.intersect(s);
+        let xs = r.intersect(&s);
 
         assert_eq!(xs.len(), 2);
         assert_eq!(xs[0].t, 3.0);
@@ -203,17 +185,18 @@ mod tests {
     }
 
     #[test]
-    fn test_ray_misses_translated_sphere() {
+    fn test_ray_misses_translated_shape() {
         let r = Ray {
             origin: point(0.0, 0.0, -5.0),
             direction: vector(0.0, 0.0, 1.0),
         };
-        let s = Sphere {
+        let s = Shape {
+            intersectable: Box::new(Sphere {}),
             transform: Matrix4::translation(5.0, 0.0, 0.0),
             material: Material::new(),
         };
 
-        let xs = r.intersect(s);
+        let xs = r.intersect(&s);
 
         assert_eq!(xs.len(), 0);
     }

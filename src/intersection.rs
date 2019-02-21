@@ -1,11 +1,11 @@
 use point::Point;
 use ray::Ray;
-use sphere::Sphere;
+use shape::Shape;
 use utilities::EPSILON;
 
-#[derive(Copy, Clone, Debug, PartialEq)]
+#[derive(Clone, Debug, PartialEq)]
 pub struct Intersection {
-    pub object: Sphere,
+    pub object: Shape,
     pub t: f64,
 }
 
@@ -15,7 +15,7 @@ pub struct Precompute {
     pub eyev: Point,
     pub inside: bool,
     pub normalv: Point,
-    pub object: Sphere,
+    pub object: Shape,
     pub point: Point,
     pub t: f64,
 }
@@ -28,10 +28,10 @@ impl Intersection {
     pub fn hit(hits: &mut Vec<Intersection>) -> Option<Intersection> {
         hits.retain(|x| x.t > 0.0);
         if hits.len() > 0 {
-            let mut hit: Intersection = hits[0];
+            let mut hit: Intersection = hits[0].clone();
             for h in hits {
                 if h.t > 0.0 && h.t < hit.t {
-                    hit = *h;
+                    hit = h.clone();
                 }
             }
             return Some(hit);
@@ -46,7 +46,7 @@ impl Intersection {
             eyev: ray.direction.multiply_scalar(-1.0),
             inside: false,
             normalv: normalv,
-            object: self.object,
+            object: self.object.clone(),
             over_point: point.add(&normalv.multiply_scalar(EPSILON)),
             point: point,
             t: self.t,
@@ -67,14 +67,17 @@ mod tests {
     use point::point;
     use point::vector;
     use ray::Ray;
-    use sphere::Sphere;
+    use shape::Shape;
     use utilities::equal;
     use utilities::EPSILON;
 
     #[test]
     fn test_intersection() {
-        let s = Sphere::new();
-        let i = Intersection { object: s, t: 3.5 };
+        let s = Shape::sphere();
+        let i = Intersection {
+            object: s.clone(),
+            t: 3.5,
+        };
 
         assert_eq!(i.object, s);
         assert!(equal(i.t, 3.5));
@@ -82,9 +85,15 @@ mod tests {
 
     #[test]
     fn test_intersections() {
-        let s = Sphere::new();
-        let i1 = Intersection { object: s, t: 1.0 };
-        let i2 = Intersection { object: s, t: 2.0 };
+        let s = Shape::sphere();
+        let i1 = Intersection {
+            object: s.clone(),
+            t: 1.0,
+        };
+        let i2 = Intersection {
+            object: s.clone(),
+            t: 2.0,
+        };
         let xs = Intersection::intersections(i1, i2);
 
         assert_eq!(xs.len(), 2);
@@ -94,33 +103,51 @@ mod tests {
 
     #[test]
     fn test_hits_when_all_positive() {
-        let s = Sphere::new();
-        let i1 = Intersection { t: 1.0, object: s };
-        let i2 = Intersection { t: 2.0, object: s };
+        let s = Shape::sphere();
+        let i1 = Intersection {
+            t: 1.0,
+            object: s.clone(),
+        };
+        let i2 = Intersection {
+            t: 2.0,
+            object: s.clone(),
+        };
 
-        let hit = Intersection::hit(&mut vec![i1, i2]);
+        let hit = Intersection::hit(&mut vec![i1.clone(), i2.clone()]);
 
         assert_eq!(hit.unwrap(), i1);
     }
 
     #[test]
     fn test_hits_when_some_negative() {
-        let s = Sphere::new();
-        let i1 = Intersection { t: -1.0, object: s };
-        let i2 = Intersection { t: 2.0, object: s };
+        let s = Shape::sphere();
+        let i1 = Intersection {
+            t: -1.0,
+            object: s.clone(),
+        };
+        let i2 = Intersection {
+            t: 2.0,
+            object: s.clone(),
+        };
 
-        let hit = Intersection::hit(&mut vec![i1, i2]);
+        let hit = Intersection::hit(&mut vec![i1.clone(), i2.clone()]);
 
         assert_eq!(hit.unwrap(), i2);
     }
 
     #[test]
     fn test_hits_when_all_negative() {
-        let s = Sphere::new();
-        let i1 = Intersection { t: -1.0, object: s };
-        let i2 = Intersection { t: -2.0, object: s };
+        let s = Shape::sphere();
+        let i1 = Intersection {
+            t: -1.0,
+            object: s.clone(),
+        };
+        let i2 = Intersection {
+            t: -2.0,
+            object: s.clone(),
+        };
 
-        let hit = Intersection::hit(&mut vec![i1, i2]);
+        let hit = Intersection::hit(&mut vec![i1.clone(), i2.clone()]);
 
         assert_eq!(hit, None);
     }
@@ -131,9 +158,9 @@ mod tests {
             origin: point(0.0, 0.0, -5.0),
             direction: vector(0.0, 0.0, 1.0),
         };
-        let sphere = Sphere::new();
+        let shape = Shape::sphere();
         let i = Intersection {
-            object: sphere,
+            object: shape.clone(),
             t: 4.0,
         };
 
@@ -145,7 +172,7 @@ mod tests {
                 eyev: vector(0.0, 0.0, -1.0),
                 inside: false,
                 normalv: vector(0.0, 0.0, -1.0),
-                object: sphere,
+                object: shape,
                 over_point: point(0.0, 0.0, -1.00001),
                 point: point(0.0, 0.0, -1.0),
                 t: i.t,
@@ -159,9 +186,9 @@ mod tests {
             origin: point(0.0, 0.0, 0.0),
             direction: vector(0.0, 0.0, 1.0),
         };
-        let sphere = Sphere::new();
+        let shape = Shape::sphere();
         let i = Intersection {
-            object: sphere,
+            object: shape.clone(),
             t: 1.0,
         };
 
@@ -173,7 +200,7 @@ mod tests {
                 eyev: vector(0.0, 0.0, -1.0),
                 inside: true,
                 normalv: vector(0.0, 0.0, -1.0),
-                object: sphere,
+                object: shape,
                 over_point: point(0.0, 0.0, 1.00001),
                 point: point(0.0, 0.0, 1.0),
                 t: i.t,
@@ -187,10 +214,10 @@ mod tests {
             origin: point(0.0, 0.0, -5.0),
             direction: vector(0.0, 0.0, 1.0),
         };
-        let mut sphere = Sphere::new();
-        sphere.transform = Matrix4::translation(0.0, 0.0, 1.0);
+        let mut shape = Shape::sphere();
+        shape.transform = Matrix4::translation(0.0, 0.0, 1.0);
         let i = Intersection {
-            object: sphere,
+            object: shape,
             t: 5.0,
         };
 
