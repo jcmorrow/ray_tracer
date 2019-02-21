@@ -1,10 +1,8 @@
 use camera::Camera;
 use color::Color;
-use intersection::Intersection;
 use material::Material;
 use matrix::Matrix4;
 use point::point;
-use point_light::PointLight;
 use sphere::Sphere;
 use transformation_matrix::TransformationMatrix;
 use world::World;
@@ -55,7 +53,7 @@ fn main() -> std::io::Result<()> {
     right_wall.material = material;
     world.objects.push(right_wall);
 
-    let mut camera = Camera::new(200, 100, PI / 3.0);
+    let mut camera = Camera::new(400, 300, PI / 3.0);
     let from = point(0.0, 1.5, -5.0);
     let to = point(0.0, 1.0, 0.0);
     let up = point(0.0, 1.0, 0.0);

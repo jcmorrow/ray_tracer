@@ -86,7 +86,7 @@ impl Point {
         return empty_vector().sub(&self);
     }
 
-    fn magnitude(&self) -> f64 {
+    pub fn magnitude(&self) -> f64 {
         return (self.x.powi(2) + self.y.powi(2) + self.z.powi(2) + self.w.powi(2)).sqrt();
     }
 

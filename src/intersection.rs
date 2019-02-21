@@ -1,6 +1,7 @@
 use point::Point;
 use ray::Ray;
 use sphere::Sphere;
+use utilities::EPSILON;
 
 #[derive(Copy, Clone, Debug, PartialEq)]
 pub struct Intersection {
@@ -10,6 +11,7 @@ pub struct Intersection {
 
 #[derive(Debug, PartialEq)]
 pub struct Precompute {
+    pub over_point: Point,
     pub eyev: Point,
     pub inside: bool,
     pub normalv: Point,
@@ -39,11 +41,13 @@ impl Intersection {
 
     pub fn precompute(&self, ray: &Ray) -> Precompute {
         let point = ray.position(self.t);
+        let normalv = self.object.normal_at(&point);
         let mut precompute = Precompute {
             eyev: ray.direction.multiply_scalar(-1.0),
             inside: false,
-            normalv: self.object.normal_at(&point),
+            normalv: normalv,
             object: self.object,
+            over_point: point.add(&normalv.multiply_scalar(EPSILON)),
             point: point,
             t: self.t,
         };
@@ -59,11 +63,13 @@ impl Intersection {
 mod tests {
     use intersection::Intersection;
     use intersection::Precompute;
+    use matrix::Matrix4;
     use point::point;
     use point::vector;
     use ray::Ray;
     use sphere::Sphere;
     use utilities::equal;
+    use utilities::EPSILON;
 
     #[test]
     fn test_intersection() {
@@ -140,6 +146,7 @@ mod tests {
                 inside: false,
                 normalv: vector(0.0, 0.0, -1.0),
                 object: sphere,
+                over_point: point(0.0, 0.0, -1.00001),
                 point: point(0.0, 0.0, -1.0),
                 t: i.t,
             }
@@ -167,9 +174,29 @@ mod tests {
                 inside: true,
                 normalv: vector(0.0, 0.0, -1.0),
                 object: sphere,
+                over_point: point(0.0, 0.0, 1.00001),
                 point: point(0.0, 0.0, 1.0),
                 t: i.t,
             }
         );
+    }
+
+    #[test]
+    fn test_precompute_intersection_slightly_above() {
+        let r = Ray {
+            origin: point(0.0, 0.0, -5.0),
+            direction: vector(0.0, 0.0, 1.0),
+        };
+        let mut sphere = Sphere::new();
+        sphere.transform = Matrix4::translation(0.0, 0.0, 1.0);
+        let i = Intersection {
+            object: sphere,
+            t: 5.0,
+        };
+
+        let precompute = i.precompute(&r);
+
+        assert!(precompute.over_point.z < -EPSILON / 2.0);
+        assert!(precompute.point.z > precompute.over_point.z);
     }
 }
