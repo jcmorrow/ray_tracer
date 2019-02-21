@@ -135,7 +135,7 @@ mod tests {
         let comps = i.precompute(&r);
         let c = world.shade_hit(comps);
 
-        assert_eq!(c, Color::new(0.90498, 0.90498, 0.90498));
+        assert_eq!(c, Color::new(0.1, 0.1, 0.1));
     }
 
     #[test]
