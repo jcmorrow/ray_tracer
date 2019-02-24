@@ -5,7 +5,7 @@ use intersection::Precompute;
 use material::Material;
 use matrix::Matrix4;
 use matrix::IDENTITY_MATRIX;
-use pattern::SolidPattern;
+use pattern::Solid;
 use point::point;
 use point::Point;
 use point_light::PointLight;
@@ -29,7 +29,7 @@ impl World {
                         diffuse: 0.7,
                         shininess: 200.0,
                         specular: 0.2,
-                        pattern: Box::new(SolidPattern::new(Color::white())),
+                        pattern: Box::new(Solid::new(Color::new(0.8, 1.0, 0.6))),
                     },
                 },
                 Shape {
@@ -53,6 +53,7 @@ impl World {
             &precompute.eyev,
             &precompute.normalv,
             is_shadowed,
+            &precompute.object,
         )
     }
 

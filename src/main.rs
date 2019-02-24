@@ -1,8 +1,11 @@
+extern crate noise;
+
 use camera::Camera;
 use color::Color;
 use material::Material;
 use matrix::Matrix4;
-use pattern::StripePattern;
+use pattern::Gradient;
+use pattern::Perlin;
 use point::point;
 use shape::Shape;
 use std::f64::consts::PI;
@@ -31,10 +34,18 @@ fn main() -> std::io::Result<()> {
     let mut world = World::new();
 
     let mut material = Material::new();
-    material.pattern = Box::new(StripePattern::new(Color::black(), Color::white()));
+    let mut pattern = Gradient::new(Color::black(), Color::white());
+    let mut perlin_pattern = Perlin::new(Box::new(pattern.clone()));
+    perlin_pattern.factor = 0.25;
 
+    material.pattern = Box::new(perlin_pattern.clone());
+
+    world.objects[0].transform = Matrix4::scaling(2.0, 1.0, 1.0);
+    world.objects[0].material = material.clone();
     let mut floor = Shape::plane();
     floor.transform = Matrix4::translation(0.0, -1.0, 0.0);
+    material.pattern = Box::new(perlin_pattern.clone());
+    floor.material = material.clone();
     world.objects.push(floor);
 
     let mut camera = Camera::new(200, 100, PI / 3.0);

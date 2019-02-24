@@ -22,11 +22,19 @@ impl Color {
     }
 
     pub fn add(&self, other: &Color) -> Color {
-        return Color {
+        Color {
             blue: self.blue + other.blue,
             green: self.green + other.green,
             red: self.red + other.red,
-        };
+        }
+    }
+
+    pub fn sub(&self, other: &Color) -> Color {
+        Color {
+            blue: self.blue - other.blue,
+            green: self.green - other.green,
+            red: self.red - other.red,
+        }
     }
 
     pub fn hadamard_product(&self, other: &Color) -> Color {
@@ -42,6 +50,14 @@ impl Color {
             blue: self.blue * factor,
             green: self.green * factor,
             red: self.red * factor,
+        };
+    }
+
+    pub fn divide(&self, factor: f64) -> Color {
+        return Color {
+            blue: self.blue / factor,
+            green: self.green / factor,
+            red: self.red / factor,
         };
     }
 

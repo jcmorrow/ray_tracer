@@ -4,3 +4,4 @@ version = "0.1.0"
 authors = ["Josh Morrow <josh@jcmorrow.com>"]
 
 [dependencies]
+noise = "0.5.1"
