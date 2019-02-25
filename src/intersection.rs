@@ -11,12 +11,13 @@ pub struct Intersection {
 
 #[derive(Debug, PartialEq)]
 pub struct Precompute {
-    pub over_point: Point,
     pub eyev: Point,
     pub inside: bool,
     pub normalv: Point,
     pub object: Shape,
+    pub over_point: Point,
     pub point: Point,
+    pub reflectv: Point,
     pub t: f64,
 }
 
@@ -50,6 +51,7 @@ impl Intersection {
             over_point: point.add(&normalv.multiply_scalar(EPSILON)),
             point: point,
             t: self.t,
+            reflectv: ray.direction.reflect(&normalv),
         };
         if precompute.normalv.dot(&precompute.eyev) < 0.0 {
             precompute.inside = true;
@@ -170,6 +172,7 @@ mod tests {
             precompute,
             Precompute {
                 eyev: vector(0.0, 0.0, -1.0),
+                reflectv: vector(0.0, 0.0, -1.0),
                 inside: false,
                 normalv: vector(0.0, 0.0, -1.0),
                 object: shape,
@@ -203,6 +206,7 @@ mod tests {
                 object: shape,
                 over_point: point(0.0, 0.0, 1.00001),
                 point: point(0.0, 0.0, 1.0),
+                reflectv: vector(0.0, 0.0, -1.0),
                 t: i.t,
             }
         );
@@ -225,5 +229,25 @@ mod tests {
 
         assert!(precompute.over_point.z < -EPSILON / 2.0);
         assert!(precompute.point.z > precompute.over_point.z);
+    }
+
+    #[test]
+    fn test_precompute_intersection_reflective() {
+        let shape = Shape::plane();
+        let sqrt_two_over_two = 2.0_f64.sqrt() / 2.0;
+        let r = Ray {
+            origin: point(0.0, 1.0, -1.0),
+            direction: vector(0.0, -sqrt_two_over_two, sqrt_two_over_two),
+        };
+        let i = Intersection {
+            object: shape,
+            t: 5.0,
+        };
+
+        let precompute = i.precompute(&r);
+
+        assert!(precompute
+            .reflectv
+            .equal(&vector(0.0, sqrt_two_over_two, sqrt_two_over_two)));
     }
 }

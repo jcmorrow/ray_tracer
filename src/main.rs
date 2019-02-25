@@ -34,21 +34,21 @@ fn main() -> std::io::Result<()> {
     let mut world = World::new();
 
     let mut material = Material::new();
-    let mut pattern = Gradient::new(Color::black(), Color::white());
+    material.reflective = 0.75;
+    let pattern = Gradient::new(Color::black(), Color::white());
     let mut perlin_pattern = Perlin::new(Box::new(pattern.clone()));
     perlin_pattern.factor = 0.25;
 
     material.pattern = Box::new(perlin_pattern.clone());
 
-    world.objects[0].transform = Matrix4::scaling(2.0, 1.0, 1.0);
     world.objects[0].material = material.clone();
     let mut floor = Shape::plane();
     floor.transform = Matrix4::translation(0.0, -1.0, 0.0);
     material.pattern = Box::new(perlin_pattern.clone());
-    floor.material = material.clone();
+    // floor.material = material.clone();
     world.objects.push(floor);
 
-    let mut camera = Camera::new(200, 100, PI / 3.0);
+    let mut camera = Camera::new(600, 400, PI / 3.0);
     let from = point(0.0, 1.5, -5.0);
     let to = point(0.0, 0.0, 0.0);
     let up = point(0.0, 1.0, 0.0);

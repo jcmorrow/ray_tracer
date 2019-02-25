@@ -10,9 +10,10 @@ use utilities::equal;
 pub struct Material {
     pub ambient: f64,
     pub diffuse: f64,
+    pub pattern: Box<Patternable>,
+    pub reflective: f64,
     pub shininess: f64,
     pub specular: f64,
-    pub pattern: Box<Patternable>,
 }
 
 impl Material {
@@ -23,6 +24,7 @@ impl Material {
             shininess: 200.0,
             specular: 0.9,
             pattern: Box::new(Solid::new(Color::white())),
+            reflective: 0.0,
         };
     }
 
@@ -91,6 +93,7 @@ mod tests {
         assert!(equal(m.diffuse, 0.9));
         assert!(equal(m.specular, 0.9));
         assert!(equal(m.shininess, 200.0));
+        assert!(equal(m.reflective, 0.0));
     }
 
     #[test]

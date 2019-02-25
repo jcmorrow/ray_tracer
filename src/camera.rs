@@ -62,7 +62,7 @@ impl Camera {
 
         for x in 0..self.hsize - 1 {
             for y in 0..self.vsize - 1 {
-                canvas.write_pixel(x, y, &world.color_at(&self.ray_for_pixel(x, y)));
+                canvas.write_pixel(x, y, &world.color_at(&self.ray_for_pixel(x, y), 5));
             }
         }
 
