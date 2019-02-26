@@ -40,7 +40,11 @@ impl Shape {
         Shape {
             transform: IDENTITY_MATRIX,
             material: Material::new(),
-            intersectable: Box::new(Cylinder {}),
+            intersectable: Box::new(Cylinder {
+                minimum: None,
+                maximum: None,
+                closed: true,
+            }),
         }
     }
 
@@ -65,7 +69,7 @@ impl PartialEq for Shape {
 
 #[cfg(test)]
 mod tests {
-    use intersectable::Sphere;
+    use intersectable::{Cylinder, Sphere};
     use material::Material;
     use matrix::Matrix4;
     use matrix::IDENTITY_MATRIX;
@@ -261,7 +265,13 @@ mod tests {
 
     #[test]
     fn test_cylinder_intersection_misses() {
-        let s = Shape::cylinder();
+        let mut s = Shape::cylinder();
+        let cylinder = Cylinder {
+            minimum: None,
+            maximum: None,
+            closed: false,
+        };
+        s.intersectable = Box::new(cylinder);
         let a = Ray {
             origin: point(1., 0., 0.),
             direction: vector(0., 1., 0.),
@@ -282,18 +292,28 @@ mod tests {
 
     #[test]
     fn test_cylinder_intersection_hits() {
-        let s = Shape::cylinder();
+        let mut s = Shape::cylinder();
+        let cylinder = Cylinder {
+            minimum: None,
+            maximum: None,
+            closed: false,
+        };
+        s.intersectable = Box::new(cylinder);
         let inputs: Vec<(Point, Point, f64, f64)> = vec![
             (point(1., 0., -5.), vector(0., 0., 1.), 5., 5.),
             (point(0., 0., -5.), vector(0., 0., 1.), 4., 6.),
-            // this one isn't working, not sure why.
-            // (point(0.5, 0., -5.), vector(0.1, 1., 1.), 6.80798, 7.08872),
+            (
+                point(0.5, 0., -5.),
+                vector(0.1, 1., 1.),
+                6.80798191702732,
+                7.088723439378861,
+            ),
         ];
 
         for input in inputs {
             let ray = Ray {
                 origin: input.0,
-                direction: input.1,
+                direction: input.1.normalize(),
             };
 
             assert_eq!(ray.intersect(&s).len(), 2);
@@ -314,6 +334,60 @@ mod tests {
 
         for input in inputs {
             assert_eq!(s.normal_at(&input.0), input.1);
+        }
+    }
+
+    #[test]
+    fn test_cylinder_intersection_truncated() {
+        let mut s = Shape::cylinder();
+        let cylinder = Cylinder {
+            minimum: Some(1.),
+            maximum: Some(2.),
+            closed: false,
+        };
+        s.intersectable = Box::new(cylinder);
+        let inputs: Vec<(Point, Point, usize)> = vec![
+            (point(0., 1.5, 0.), vector(0.1, 1., 0.), 0),
+            (point(0., 3., -5.), vector(0., 0., 1.), 0),
+            (point(0., 0., -5.), vector(0., 0., 1.), 0),
+            (point(0., 2., -5.), vector(0., 0., 1.), 0),
+            (point(0., 1., -5.), vector(0., 0., 1.), 0),
+            (point(0., 1.5, -2.), vector(0., 0., 1.), 0),
+        ];
+
+        for input in inputs {
+            let ray = Ray {
+                origin: input.0,
+                direction: input.1.normalize(),
+            };
+            assert_eq!(ray.intersect(&s).len(), input.2);
+        }
+    }
+
+    #[test]
+    fn test_cylinder_intersection_capped() {
+        let mut s = Shape::cylinder();
+        let cylinder = Cylinder {
+            minimum: Some(1.),
+            maximum: Some(2.),
+            closed: true,
+        };
+        s.intersectable = Box::new(cylinder);
+        let inputs: Vec<(Point, Point, usize)> = vec![
+            (point(0., 3., 0.), vector(0., -1., 0.), 2),
+            (point(0., 3., -2.), vector(0., -1., 2.), 2),
+            (point(0., 4., -2.), vector(0., -1., 1.), 2),
+            (point(0., 0., -2.), vector(0., 1., 2.), 2),
+            (point(0., -1., -2.), vector(0., 1., 1.), 2),
+        ];
+
+        for input in inputs {
+            println!("{:?}", input);
+            let ray = Ray {
+                origin: input.0,
+                direction: input.1.normalize(),
+            };
+            assert_eq!(ray.intersect(&s).len(), input.2);
         }
     }
 }

@@ -60,8 +60,8 @@ fn main() -> std::io::Result<()> {
     world.objects.push(cube);
     // world.objects.push(sphere);
 
-    let mut camera = Camera::new(600, 400, PI / 3.0);
-    let from = point(0.0, 1.5, -5.0);
+    let mut camera = Camera::new(800, 400, PI / 2.0);
+    let from = point(0.0, 5., -5.0);
     let to = point(0.0, 0.0, 0.0);
     let up = point(0.0, 1.0, 0.0);
     camera.transform = TransformationMatrix::new(&from, &to, &up);

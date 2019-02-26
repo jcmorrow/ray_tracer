@@ -158,7 +158,11 @@ impl Intersectable for Cube {
 }
 
 #[derive(Clone, Debug)]
-pub struct Cylinder {}
+pub struct Cylinder {
+    pub minimum: Option<f64>,
+    pub maximum: Option<f64>,
+    pub closed: bool,
+}
 
 impl Cylinder {
     fn check_axis(&self, origin: f64, direction: f64) -> (f64, f64) {
@@ -179,6 +183,46 @@ impl Cylinder {
             (tmin, tmax)
         }
     }
+
+    fn check_cap(&self, ray: &Ray, t: f64) -> bool {
+        let x = ray.origin.x + t * ray.direction.x;
+        let z = ray.origin.z + t * ray.direction.z;
+
+        x.powi(2) + z.powi(2) <= 1.
+    }
+
+    fn check_caps(&self, ray: &Ray, object: &Shape) -> Vec<Intersection> {
+        let mut hits: Vec<Intersection> = Vec::new();
+        let has_max = match self.maximum {
+            Some(_) => true,
+            None => false,
+        };
+        let has_min = match self.minimum {
+            Some(_) => true,
+            None => false,
+        };
+        if !has_min || !has_max || !self.closed || ray.direction.y.abs() < EPSILON {
+            return hits;
+        }
+
+        let mut t = (self.minimum.unwrap() - ray.origin.y) / ray.direction.y;
+        if self.check_cap(&ray, t) {
+            hits.push(Intersection {
+                object: object.clone(),
+                t,
+            });
+        }
+
+        t = (self.maximum.unwrap() - ray.origin.y) / ray.direction.y;
+        if self.check_cap(&ray, t) {
+            hits.push(Intersection {
+                object: object.clone(),
+                t,
+            });
+        }
+
+        hits
+    }
 }
 
 impl Intersectable for Cylinder {
@@ -189,7 +233,7 @@ impl Intersectable for Cylinder {
     fn local_intersect(&self, ray: &Ray, object: &Shape) -> Vec<Intersection> {
         let a = ray.direction.x.powi(2) + ray.direction.z.powi(2);
         if a.abs() < EPSILON {
-            return Vec::new();
+            return self.check_caps(&ray, &object);
         }
 
         let b = 2. * ray.origin.x * ray.direction.x + 2. * ray.origin.z * ray.direction.z;
@@ -202,16 +246,36 @@ impl Intersectable for Cylinder {
         } else {
             let a2 = 2. * a;
             let disc_sqrt = disc.sqrt();
-            vec![
-                Intersection {
-                    object: object.clone(),
-                    t: (-b - disc_sqrt) / a2,
-                },
-                Intersection {
-                    object: object.clone(),
-                    t: (-b + disc_sqrt) / a2,
-                },
-            ]
+            let t0 = Intersection {
+                object: object.clone(),
+                t: (-b - disc_sqrt) / a2,
+            };
+            let t1 = Intersection {
+                object: object.clone(),
+                t: (-b + disc_sqrt) / a2,
+            };
+            let has_max = match self.maximum {
+                Some(_) => true,
+                None => false,
+            };
+            let has_min = match self.minimum {
+                Some(_) => true,
+                None => false,
+            };
+            let mut hits: Vec<Intersection> = Vec::new();
+            if (!has_min || t0.t > self.minimum.unwrap())
+                && (!has_max || t0.t < self.maximum.unwrap())
+            {
+                hits.push(t0);
+            }
+            if (!has_min || t1.t > self.minimum.unwrap())
+                && (!has_max || t1.t < self.maximum.unwrap())
+            {
+                hits.push(t1);
+            }
+            hits.extend(self.check_caps(&ray, &object));
+            hits.truncate(2);
+            hits
         }
     }
 }
