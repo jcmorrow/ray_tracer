@@ -9,10 +9,10 @@ pub struct Matrix4 {
 
 pub const IDENTITY_MATRIX: Matrix4 = Matrix4 {
     members: [
-        [1.0, 0.0, 0.0, 0.0],
-        [0.0, 1.0, 0.0, 0.0],
-        [0.0, 0.0, 1.0, 0.0],
-        [0.0, 0.0, 0.0, 1.0],
+        [1., 0., 0., 0.],
+        [0., 1., 0., 0.],
+        [0., 0., 1., 0.],
+        [0., 0., 0., 1.],
     ],
 };
 
@@ -23,7 +23,7 @@ impl Matrix4 {
 
     pub fn empty() -> Matrix4 {
         Matrix4 {
-            members: [[0.0; 4]; 4],
+            members: [[0.; 4]; 4],
         }
     }
 
@@ -109,12 +109,12 @@ impl Matrix4 {
         if (col + row) % 2 == 0 {
             return minor;
         } else {
-            return minor * -1.0;
+            return minor * -1.;
         }
     }
 
     pub fn determinant(&self) -> f64 {
-        let mut result = 0.0;
+        let mut result = 0.;
         for i in 0..4 {
             result = result + self.members[0][i] * self.cofactor(0, i);
         }
@@ -122,7 +122,7 @@ impl Matrix4 {
     }
 
     pub fn invertible(&self) -> bool {
-        self.determinant() != 0.0
+        self.determinant() != 0.
     }
 
     pub fn inverse(&self) -> Matrix4 {
@@ -209,7 +209,7 @@ impl Matrix3 {
     }
 
     pub fn empty() -> Matrix3 {
-        Matrix3::new([[0.0; 3]; 3])
+        Matrix3::new([[0.; 3]; 3])
     }
 
     pub fn equal(&self, other: &Matrix3) -> bool {
@@ -250,12 +250,12 @@ impl Matrix3 {
         if col + row % 2 == 0 {
             return minor;
         } else {
-            return minor * -1.0;
+            return minor * -1.;
         }
     }
 
     pub fn determinant(&self) -> f64 {
-        let mut result = 0.0;
+        let mut result = 0.;
         for i in 0..3 {
             result = result + self.members[0][i] * self.cofactor(0, i);
         }
@@ -274,7 +274,7 @@ impl Matrix2 {
     }
 
     pub fn empty() -> Matrix2 {
-        Matrix2::new([[0.0; 2]; 2])
+        Matrix2::new([[0.; 2]; 2])
     }
 
     pub fn equal(&self, other: &Matrix2) -> bool {
@@ -306,44 +306,44 @@ mod tests {
 
     #[test]
     fn test_matrix_new() {
-        let mat2 = Matrix2::new([[-3.0, 5.0], [1.0, -2.0]]);
+        let mat2 = Matrix2::new([[-3., 5.], [1., -2.]]);
 
-        assert!(equal(mat2.members[0][0], -3.0));
-        assert!(equal(mat2.members[0][1], 5.0));
-        assert!(equal(mat2.members[1][0], 1.0));
-        assert!(equal(mat2.members[1][1], -2.0));
+        assert!(equal(mat2.members[0][0], -3.));
+        assert!(equal(mat2.members[0][1], 5.));
+        assert!(equal(mat2.members[1][0], 1.));
+        assert!(equal(mat2.members[1][1], -2.));
 
-        let mat3 = Matrix3::new([[-3.0, 5.0, 0.0], [1.0, -2.0, -7.0], [0.0, 1.0, 1.0]]);
+        let mat3 = Matrix3::new([[-3., 5., 0.], [1., -2., -7.], [0., 1., 1.]]);
 
-        assert!(equal(mat3.members[0][0], -3.0));
-        assert!(equal(mat3.members[0][1], 5.0));
-        assert!(equal(mat3.members[0][2], 0.0));
-        assert!(equal(mat3.members[1][0], 1.0));
-        assert!(equal(mat3.members[1][1], -2.0));
-        assert!(equal(mat3.members[1][2], -7.0));
-        assert!(equal(mat3.members[2][0], 0.0));
-        assert!(equal(mat3.members[2][1], 1.0));
-        assert!(equal(mat3.members[2][2], 1.0));
+        assert!(equal(mat3.members[0][0], -3.));
+        assert!(equal(mat3.members[0][1], 5.));
+        assert!(equal(mat3.members[0][2], 0.));
+        assert!(equal(mat3.members[1][0], 1.));
+        assert!(equal(mat3.members[1][1], -2.));
+        assert!(equal(mat3.members[1][2], -7.));
+        assert!(equal(mat3.members[2][0], 0.));
+        assert!(equal(mat3.members[2][1], 1.));
+        assert!(equal(mat3.members[2][2], 1.));
 
         let mat4 = Matrix4::new([
-            [1.0, 2.0, 3.0, 4.0],
+            [1., 2., 3., 4.],
             [5.5, 6.5, 7.5, 8.5],
-            [9.0, 10.0, 11.0, 12.0],
+            [9., 10., 11., 12.],
             [13.5, 14.5, 15.5, 16.5],
         ]);
 
-        assert!(equal(mat4.members[0][0], 1.0));
-        assert!(equal(mat4.members[0][1], 2.0));
-        assert!(equal(mat4.members[0][2], 3.0));
-        assert!(equal(mat4.members[0][3], 4.0));
+        assert!(equal(mat4.members[0][0], 1.));
+        assert!(equal(mat4.members[0][1], 2.));
+        assert!(equal(mat4.members[0][2], 3.));
+        assert!(equal(mat4.members[0][3], 4.));
         assert!(equal(mat4.members[1][0], 5.5));
         assert!(equal(mat4.members[1][1], 6.5));
         assert!(equal(mat4.members[1][2], 7.5));
         assert!(equal(mat4.members[1][3], 8.5));
-        assert!(equal(mat4.members[2][0], 9.0));
-        assert!(equal(mat4.members[2][1], 10.0));
-        assert!(equal(mat4.members[2][2], 11.0));
-        assert!(equal(mat4.members[2][3], 12.0));
+        assert!(equal(mat4.members[2][0], 9.));
+        assert!(equal(mat4.members[2][1], 10.));
+        assert!(equal(mat4.members[2][2], 11.));
+        assert!(equal(mat4.members[2][3], 12.));
         assert!(equal(mat4.members[3][0], 13.5));
         assert!(equal(mat4.members[3][1], 14.5));
         assert!(equal(mat4.members[3][2], 15.5));
@@ -352,52 +352,52 @@ mod tests {
 
     #[test]
     fn test_matrix_equals() {
-        let a = Matrix2::new([[1.0, 2.0], [3.0, 4.0]]);
-        let b = Matrix2::new([[1.0, 2.0], [3.0, 4.0]]);
+        let a = Matrix2::new([[1., 2.], [3., 4.]]);
+        let b = Matrix2::new([[1., 2.], [3., 4.]]);
 
         assert!(a.equal(&b));
 
-        let a = Matrix2::new([[2.0, 2.0], [3.0, 4.0]]);
-        let b = Matrix2::new([[1.0, 2.0], [3.0, 4.0]]);
+        let a = Matrix2::new([[2., 2.], [3., 4.]]);
+        let b = Matrix2::new([[1., 2.], [3., 4.]]);
 
         assert!(!a.equal(&b));
 
-        let a = Matrix3::new([[1.0, 2.0, 3.0], [4.0, 5.0, 6.0], [7.0, 8.0, 9.0]]);
-        let b = Matrix3::new([[1.0, 2.0, 3.0], [4.0, 5.0, 6.0], [7.0, 8.0, 9.0]]);
+        let a = Matrix3::new([[1., 2., 3.], [4., 5., 6.], [7., 8., 9.]]);
+        let b = Matrix3::new([[1., 2., 3.], [4., 5., 6.], [7., 8., 9.]]);
 
         assert!(a.equal(&b));
 
-        let a = Matrix3::new([[2.0, 2.0, 3.0], [4.0, 5.0, 6.0], [7.0, 8.0, 9.0]]);
-        let b = Matrix3::new([[1.0, 2.0, 3.0], [4.0, 5.0, 6.0], [7.0, 8.0, 9.0]]);
+        let a = Matrix3::new([[2., 2., 3.], [4., 5., 6.], [7., 8., 9.]]);
+        let b = Matrix3::new([[1., 2., 3.], [4., 5., 6.], [7., 8., 9.]]);
 
         assert!(!a.equal(&b));
 
         let a = Matrix4::new([
-            [1.0, 2.0, 3.0, 4.0],
-            [5.0, 6.0, 7.0, 8.0],
-            [9.0, 10.0, 11.0, 12.0],
-            [13.0, 14.0, 15.0, 16.0],
+            [1., 2., 3., 4.],
+            [5., 6., 7., 8.],
+            [9., 10., 11., 12.],
+            [13., 14., 15., 16.],
         ]);
         let b = Matrix4::new([
-            [1.0, 2.0, 3.0, 4.0],
-            [5.0, 6.0, 7.0, 8.0],
-            [9.0, 10.0, 11.0, 12.0],
-            [13.0, 14.0, 15.0, 16.0],
+            [1., 2., 3., 4.],
+            [5., 6., 7., 8.],
+            [9., 10., 11., 12.],
+            [13., 14., 15., 16.],
         ]);
 
         assert!(a.equal(&b));
 
         let a = Matrix4::new([
-            [2.0, 2.0, 3.0, 4.0],
-            [5.0, 6.0, 7.0, 8.0],
-            [9.0, 10.0, 11.0, 12.0],
-            [13.0, 14.0, 15.0, 16.0],
+            [2., 2., 3., 4.],
+            [5., 6., 7., 8.],
+            [9., 10., 11., 12.],
+            [13., 14., 15., 16.],
         ]);
         let b = Matrix4::new([
-            [1.0, 2.0, 3.0, 4.0],
-            [5.0, 6.0, 7.0, 8.0],
-            [9.0, 10.0, 11.0, 12.0],
-            [13.0, 14.0, 15.0, 16.0],
+            [1., 2., 3., 4.],
+            [5., 6., 7., 8.],
+            [9., 10., 11., 12.],
+            [13., 14., 15., 16.],
         ]);
 
         assert!(!a.equal(&b));
@@ -406,22 +406,22 @@ mod tests {
     #[test]
     fn test_matrix_multiply() {
         let a = Matrix4::new([
-            [1.0, 2.0, 3.0, 4.0],
-            [5.0, 6.0, 7.0, 8.0],
-            [9.0, 8.0, 7.0, 6.0],
-            [5.0, 4.0, 3.0, 2.0],
+            [1., 2., 3., 4.],
+            [5., 6., 7., 8.],
+            [9., 8., 7., 6.],
+            [5., 4., 3., 2.],
         ]);
         let b = Matrix4::new([
-            [-2.0, 1.0, 2.0, 3.0],
-            [3.0, 2.0, 1.0, -1.0],
-            [4.0, 3.0, 6.0, 5.0],
-            [1.0, 2.0, 7.0, 8.0],
+            [-2., 1., 2., 3.],
+            [3., 2., 1., -1.],
+            [4., 3., 6., 5.],
+            [1., 2., 7., 8.],
         ]);
         let c = Matrix4::new([
-            [20.0, 22.0, 50.0, 48.0],
-            [44.0, 54.0, 114.0, 108.0],
-            [40.0, 58.0, 110.0, 102.0],
-            [16.0, 26.0, 46.0, 42.0],
+            [20., 22., 50., 48.],
+            [44., 54., 114., 108.],
+            [40., 58., 110., 102.],
+            [16., 26., 46., 42.],
         ]);
 
         assert!(a.multiply(&b).equal(&c));
@@ -430,13 +430,13 @@ mod tests {
     #[test]
     fn test_matrix_multiply_point() {
         let a = Matrix4::new([
-            [1.0, 2.0, 3.0, 4.0],
-            [2.0, 4.0, 4.0, 2.0],
-            [8.0, 6.0, 4.0, 1.0],
-            [0.0, 0.0, 0.0, 1.0],
+            [1., 2., 3., 4.],
+            [2., 4., 4., 2.],
+            [8., 6., 4., 1.],
+            [0., 0., 0., 1.],
         ]);
-        let b = point(1.0, 2.0, 3.0);
-        let c = point(18.0, 24.0, 33.0);
+        let b = point(1., 2., 3.);
+        let c = point(18., 24., 33.);
 
         assert!(a.multiply_point(&b).equal(&c));
     }
@@ -444,10 +444,10 @@ mod tests {
     #[test]
     fn test_matrix_multiply_identity() {
         let a = Matrix4::new([
-            [1.0, 2.0, 3.0, 4.0],
-            [2.0, 4.0, 4.0, 2.0],
-            [8.0, 6.0, 4.0, 1.0],
-            [0.0, 0.0, 0.0, 1.0],
+            [1., 2., 3., 4.],
+            [2., 4., 4., 2.],
+            [8., 6., 4., 1.],
+            [0., 0., 0., 1.],
         ]);
 
         assert!(a.multiply(&IDENTITY_MATRIX).equal(&a));
@@ -456,16 +456,16 @@ mod tests {
     #[test]
     fn test_matrix_transpose() {
         let a = Matrix4::new([
-            [1.0, 2.0, 3.0, 4.0],
-            [5.0, 6.0, 7.0, 8.0],
-            [9.0, 10.0, 11.0, 12.0],
-            [13.0, 14.0, 15.0, 16.0],
+            [1., 2., 3., 4.],
+            [5., 6., 7., 8.],
+            [9., 10., 11., 12.],
+            [13., 14., 15., 16.],
         ]);
         let b = Matrix4::new([
-            [1.0, 5.0, 9.0, 13.0],
-            [2.0, 6.0, 10.0, 14.0],
-            [3.0, 7.0, 11.0, 15.0],
-            [4.0, 8.0, 12.0, 16.0],
+            [1., 5., 9., 13.],
+            [2., 6., 10., 14.],
+            [3., 7., 11., 15.],
+            [4., 8., 12., 16.],
         ]);
 
         assert!(a.transpose().equal(&b));
@@ -475,30 +475,30 @@ mod tests {
     #[test]
     fn test_matrix_determinant() {
         let a = Matrix2 {
-            members: [[1.0, 5.0], [-3.0, 2.0]],
+            members: [[1., 5.], [-3., 2.]],
         };
 
-        assert!(equal(a.determinant(), 17.0));
+        assert!(equal(a.determinant(), 17.));
     }
 
     #[test]
     fn test_matrix_submatrix() {
         let a = Matrix3 {
-            members: [[1.0, 5.0, 0.0], [-3.0, 2.0, 7.0], [0.0, 6.0, -3.0]],
+            members: [[1., 5., 0.], [-3., 2., 7.], [0., 6., -3.]],
         };
         let b = Matrix2 {
-            members: [[-3.0, 2.0], [0.0, 6.0]],
+            members: [[-3., 2.], [0., 6.]],
         };
 
         assert!(a.submatrix(0, 2).equal(&b));
 
         let a = Matrix4::new([
-            [-6.0, 1.0, 1.0, 6.0],
-            [-8.0, 5.0, 8.0, 6.0],
-            [-1.0, 0.0, 8.0, 2.0],
-            [-7.0, 1.0, -1.0, 1.0],
+            [-6., 1., 1., 6.],
+            [-8., 5., 8., 6.],
+            [-1., 0., 8., 2.],
+            [-7., 1., -1., 1.],
         ]);
-        let b = Matrix3::new([[-6.0, 1.0, 6.0], [-8.0, 8.0, 6.0], [-7.0, -1.0, 1.0]]);
+        let b = Matrix3::new([[-6., 1., 6.], [-8., 8., 6.], [-7., -1., 1.]]);
 
         assert!(a.submatrix(2, 1).equal(&b));
     }
@@ -506,55 +506,55 @@ mod tests {
     #[test]
     fn test_matrix_minor() {
         let a = Matrix3 {
-            members: [[3.0, 5.0, 0.0], [2.0, -1.0, -7.0], [6.0, -1.0, 5.0]],
+            members: [[3., 5., 0.], [2., -1., -7.], [6., -1., 5.]],
         };
 
-        assert!(equal(a.minor(1, 0), 25.0));
+        assert!(equal(a.minor(1, 0), 25.));
     }
 
     #[test]
     fn test_matrix_3_cofactor() {
         let a = Matrix3 {
-            members: [[3.0, 5.0, 0.0], [2.0, -1.0, -7.0], [6.0, -1.0, 5.0]],
+            members: [[3., 5., 0.], [2., -1., -7.], [6., -1., 5.]],
         };
 
-        assert!(equal(a.cofactor(0, 0), -12.0));
-        assert!(equal(a.cofactor(1, 0), -25.0));
+        assert!(equal(a.cofactor(0, 0), -12.));
+        assert!(equal(a.cofactor(1, 0), -25.));
     }
 
     #[test]
     fn test_matrix_4_cofactor() {
         let a = Matrix4 {
             members: [
-                [-2.0, -8.0, 3.0, 5.0],
-                [-3.0, 1.0, 7.0, 3.0],
-                [1.0, 2.0, -9.0, 6.0],
-                [-6.0, 7.0, 7.0, -9.0],
+                [-2., -8., 3., 5.],
+                [-3., 1., 7., 3.],
+                [1., 2., -9., 6.],
+                [-6., 7., 7., -9.],
             ],
         };
 
-        assert!(equal(a.cofactor(0, 0), 690.0));
-        assert!(equal(a.cofactor(0, 1), 447.0));
-        assert!(equal(a.determinant(), -4071.0));
+        assert!(equal(a.cofactor(0, 0), 690.));
+        assert!(equal(a.cofactor(0, 1), 447.));
+        assert!(equal(a.determinant(), -4071.));
     }
 
     #[test]
     fn test_matrix_3_determinant() {
         let a = Matrix3 {
-            members: [[1.0, 2.0, 6.0], [-5.0, 8.0, -4.0], [2.0, 6.0, 4.0]],
+            members: [[1., 2., 6.], [-5., 8., -4.], [2., 6., 4.]],
         };
 
-        assert!(equal(a.determinant(), -196.0));
+        assert!(equal(a.determinant(), -196.));
     }
 
     #[test]
     fn test_matrix_4_invertible() {
         let a = Matrix4 {
             members: [
-                [-2.0, -8.0, 3.0, 5.0],
-                [-3.0, 1.0, 7.0, 3.0],
-                [1.0, 2.0, -9.0, 6.0],
-                [-6.0, 7.0, 7.0, -9.0],
+                [-2., -8., 3., 5.],
+                [-3., 1., 7., 3.],
+                [1., 2., -9., 6.],
+                [-6., 7., 7., -9.],
             ],
         };
 
@@ -562,10 +562,10 @@ mod tests {
 
         let b = Matrix4 {
             members: [
-                [-4.0, 2.0, -2.0, -3.0],
-                [9.0, 6.0, 2.0, 6.0],
-                [0.0, -5.0, 1.0, -5.0],
-                [0.0, 0.0, 0.0, 0.0],
+                [-4., 2., -2., -3.],
+                [9., 6., 2., 6.],
+                [0., -5., 1., -5.],
+                [0., 0., 0., 0.],
             ],
         };
 
@@ -576,10 +576,10 @@ mod tests {
     fn test_matrix_4_inverse() {
         let a = Matrix4 {
             members: [
-                [-5.0, 2.0, 6.0, -8.0],
-                [1.0, -5.0, 1.0, 8.0],
-                [7.0, 7.0, -6.0, -7.0],
-                [1.0, -3.0, 7.0, 4.0],
+                [-5., 2., 6., -8.],
+                [1., -5., 1., 8.],
+                [7., 7., -6., -7.],
+                [1., -3., 7., 4.],
             ],
         };
 
@@ -592,16 +592,16 @@ mod tests {
             ],
         };
 
-        assert!(equal(a.determinant(), 532.0));
-        assert!(equal(a.cofactor(2, 3), -160.0));
+        assert!(equal(a.determinant(), 532.));
+        assert!(equal(a.cofactor(2, 3), -160.));
         assert!(a.inverse().equal(&inverse));
 
         let b = Matrix4 {
             members: [
-                [-2.0, -8.0, 3.0, 5.0],
-                [-3.0, 1.0, 7.0, 3.0],
-                [1.0, 2.0, -9.0, 6.0],
-                [-6.0, 7.0, 7.0, -9.0],
+                [-2., -8., 3., 5.],
+                [-3., 1., 7., 3.],
+                [1., 2., -9., 6.],
+                [-6., 7., 7., -9.],
             ],
         };
         assert!(a.multiply(&b).multiply(&b.inverse()).equal(&a));
@@ -609,11 +609,11 @@ mod tests {
 
     #[test]
     fn test_translation() {
-        let transform = Matrix4::translation(5.0, -3.0, 2.0);
-        let p = point(-3.0, 4.0, 5.0);
-        let v = vector(-3.0, 4.0, 5.0);
+        let transform = Matrix4::translation(5., -3., 2.);
+        let p = point(-3., 4., 5.);
+        let v = vector(-3., 4., 5.);
 
-        assert!(transform.multiply_point(&p).equal(&point(2.0, 1.0, 7.0)));
+        assert!(transform.multiply_point(&p).equal(&point(2., 1., 7.)));
         assert!(transform
             .inverse()
             .multiply_point(&transform.multiply_point(&p))
@@ -623,113 +623,109 @@ mod tests {
 
     #[test]
     fn test_scaling() {
-        let transform = Matrix4::scaling(2.0, 3.0, 4.0);
-        let v = vector(-4.0, 6.0, 8.0);
+        let transform = Matrix4::scaling(2., 3., 4.);
+        let v = vector(-4., 6., 8.);
 
-        assert!(transform
-            .multiply_point(&v)
-            .equal(&vector(-8.0, 18.0, 32.0)));
+        assert!(transform.multiply_point(&v).equal(&vector(-8., 18., 32.)));
         assert!(transform
             .inverse()
             .multiply_point(&v)
-            .equal(&vector(-2.0, 2.0, 2.0)));
+            .equal(&vector(-2., 2., 2.)));
     }
 
     #[test]
     fn test_reflection() {
-        let transform = Matrix4::scaling(-1.0, 1.0, 1.0);
-        let v = vector(2.0, 3.0, 4.0);
+        let transform = Matrix4::scaling(-1., 1., 1.);
+        let v = vector(2., 3., 4.);
 
-        assert!(transform.multiply_point(&v).equal(&vector(-2.0, 3.0, 4.0)));
+        assert!(transform.multiply_point(&v).equal(&vector(-2., 3., 4.)));
     }
 
     #[test]
     fn test_rotation_x() {
-        let half_quarter = Matrix4::rotation_x(PI / 4.0);
-        let full_quarter = Matrix4::rotation_x(PI / 2.0);
-        let p = point(0.0, 1.0, 0.0);
+        let half_quarter = Matrix4::rotation_x(PI / 4.);
+        let full_quarter = Matrix4::rotation_x(PI / 2.);
+        let p = point(0., 1., 0.);
 
         assert!(half_quarter.multiply_point(&p).equal(&point(
-            0.0,
-            2.0_f64.sqrt() / 2.0,
-            2.0_f64.sqrt() / 2.0
+            0.,
+            2.0_f64.sqrt() / 2.,
+            2.0_f64.sqrt() / 2.
         )));
-        assert!(full_quarter.multiply_point(&p).equal(&point(0.0, 0.0, 1.0)));
+        assert!(full_quarter.multiply_point(&p).equal(&point(0., 0., 1.)));
     }
 
     #[test]
     fn test_rotation_y() {
-        let half_quarter = Matrix4::rotation_y(PI / 4.0);
-        let full_quarter = Matrix4::rotation_y(PI / 2.0);
-        let p = point(0.0, 0.0, 1.0);
+        let half_quarter = Matrix4::rotation_y(PI / 4.);
+        let full_quarter = Matrix4::rotation_y(PI / 2.);
+        let p = point(0., 0., 1.);
 
         assert!(half_quarter.multiply_point(&p).equal(&point(
-            2.0_f64.sqrt() / 2.0,
-            0.0,
-            2.0_f64.sqrt() / 2.0
+            2.0_f64.sqrt() / 2.,
+            0.,
+            2.0_f64.sqrt() / 2.
         )));
-        assert!(full_quarter.multiply_point(&p).equal(&point(1.0, 0.0, 0.0)));
+        assert!(full_quarter.multiply_point(&p).equal(&point(1., 0., 0.)));
     }
 
     #[test]
     fn test_rotation_z() {
-        let half_quarter = Matrix4::rotation_z(PI / 4.0);
-        let full_quarter = Matrix4::rotation_z(PI / 2.0);
-        let p = point(0.0, 1.0, 0.0);
+        let half_quarter = Matrix4::rotation_z(PI / 4.);
+        let full_quarter = Matrix4::rotation_z(PI / 2.);
+        let p = point(0., 1., 0.);
 
         assert!(half_quarter.multiply_point(&p).equal(&point(
-            -2.0_f64.sqrt() / 2.0,
-            2.0_f64.sqrt() / 2.0,
-            0.0,
+            -2.0_f64.sqrt() / 2.,
+            2.0_f64.sqrt() / 2.,
+            0.,
         )));
-        assert!(full_quarter
-            .multiply_point(&p)
-            .equal(&point(-1.0, 0.0, 0.0)));
+        assert!(full_quarter.multiply_point(&p).equal(&point(-1., 0., 0.)));
     }
 
     #[test]
     fn test_shearing() {
-        let transform = Matrix4::shearing(1.0, 0.0, 0.0, 0.0, 0.0, 0.0);
-        let p = point(2.0, 3.0, 4.0);
+        let transform = Matrix4::shearing(1., 0., 0., 0., 0., 0.);
+        let p = point(2., 3., 4.);
 
-        assert!(transform.multiply_point(&p).equal(&point(5.0, 3.0, 4.0)));
+        assert!(transform.multiply_point(&p).equal(&point(5., 3., 4.)));
 
-        let transform = Matrix4::shearing(0.0, 1.0, 0.0, 0.0, 0.0, 0.0);
+        let transform = Matrix4::shearing(0., 1., 0., 0., 0., 0.);
 
-        assert!(transform.multiply_point(&p).equal(&point(6.0, 3.0, 4.0)));
+        assert!(transform.multiply_point(&p).equal(&point(6., 3., 4.)));
 
-        let transform = Matrix4::shearing(0.0, 0.0, 1.0, 0.0, 0.0, 0.0);
+        let transform = Matrix4::shearing(0., 0., 1., 0., 0., 0.);
 
-        assert!(transform.multiply_point(&p).equal(&point(2.0, 5.0, 4.0)));
+        assert!(transform.multiply_point(&p).equal(&point(2., 5., 4.)));
 
-        let transform = Matrix4::shearing(0.0, 0.0, 0.0, 1.0, 0.0, 0.0);
+        let transform = Matrix4::shearing(0., 0., 0., 1., 0., 0.);
 
-        assert!(transform.multiply_point(&p).equal(&point(2.0, 7.0, 4.0)));
+        assert!(transform.multiply_point(&p).equal(&point(2., 7., 4.)));
 
-        let transform = Matrix4::shearing(0.0, 0.0, 0.0, 0.0, 1.0, 0.0);
+        let transform = Matrix4::shearing(0., 0., 0., 0., 1., 0.);
 
-        assert!(transform.multiply_point(&p).equal(&point(2.0, 3.0, 6.0)));
+        assert!(transform.multiply_point(&p).equal(&point(2., 3., 6.)));
 
-        let transform = Matrix4::shearing(0.0, 0.0, 0.0, 0.0, 0.0, 1.0);
+        let transform = Matrix4::shearing(0., 0., 0., 0., 0., 1.);
 
-        assert!(transform.multiply_point(&p).equal(&point(2.0, 3.0, 7.0)));
+        assert!(transform.multiply_point(&p).equal(&point(2., 3., 7.)));
     }
 
     #[test]
     fn test_chaining_transformations() {
-        let p = point(1.0, 0.0, 1.0);
-        let a = Matrix4::rotation_x(PI / 2.0);
-        let b = Matrix4::scaling(5.0, 5.0, 5.0);
-        let c = Matrix4::translation(10.0, 5.0, 7.0);
+        let p = point(1., 0., 1.);
+        let a = Matrix4::rotation_x(PI / 2.);
+        let b = Matrix4::scaling(5., 5., 5.);
+        let c = Matrix4::translation(10., 5., 7.);
 
         let p2 = a.multiply_point(&p);
-        assert!(p2.equal(&point(1.0, -1.0, 0.0)));
+        assert!(p2.equal(&point(1., -1., 0.)));
 
         let p3 = b.multiply_point(&p2);
-        assert!(p3.equal(&point(5.0, -5.0, 0.0)));
+        assert!(p3.equal(&point(5., -5., 0.)));
 
         let p4 = c.multiply_point(&p3);
-        assert!(p4.equal(&point(15.0, 0.0, 7.0)));
+        assert!(p4.equal(&point(15., 0., 7.)));
 
         assert!(c.multiply(&b).multiply(&a).multiply_point(&p).equal(&p4));
     }

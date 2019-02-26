@@ -168,7 +168,7 @@ impl Checker {
 
 impl Patternable for Checker {
     fn color_at(&self, point: &Point) -> Color {
-        if (point.x.abs().floor() + point.y.abs().floor() + point.z.abs().floor()) % 2.0 == 0.0 {
+        if (point.x.floor() as i32 + point.y.floor() as i32 + point.z.floor() as i32) % 2 == 0 {
             self.a
         } else {
             self.b
