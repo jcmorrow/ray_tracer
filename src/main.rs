@@ -35,8 +35,8 @@ fn main() -> std::io::Result<()> {
     world.objects = Vec::new();
 
     let mut sphere = Shape::sphere();
-    let mut cube = Shape::cube();
-    cube.transform = Matrix4::rotation_x(PI / 4.0);
+    let mut cube = Shape::cylinder();
+    // cube.transform = Matrix4::rotation_x(PI / 4.0);
     sphere.transform = Matrix4::translation(2.0, 0.0, 0.0);
 
     let mut material = Material::new();

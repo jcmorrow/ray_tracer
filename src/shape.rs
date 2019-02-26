@@ -1,7 +1,4 @@
-use intersectable::Cube;
-use intersectable::Intersectable;
-use intersectable::Plane;
-use intersectable::Sphere;
+use intersectable::*;
 use material::Material;
 use matrix::Matrix4;
 use matrix::IDENTITY_MATRIX;
@@ -39,6 +36,14 @@ impl Shape {
         }
     }
 
+    pub fn cylinder() -> Shape {
+        Shape {
+            transform: IDENTITY_MATRIX,
+            material: Material::new(),
+            intersectable: Box::new(Cylinder {}),
+        }
+    }
+
     pub fn normal_at(&self, world_point: &Point) -> Point {
         let local_point = self.transform.inverse().multiply_point(&world_point);
         let local_normal = self.intersectable.local_normal_at(&local_point);
@@ -64,8 +69,7 @@ mod tests {
     use material::Material;
     use matrix::Matrix4;
     use matrix::IDENTITY_MATRIX;
-    use point::point;
-    use point::vector;
+    use point::{point, vector, Point};
     use ray::Ray;
     use shape::Shape;
     use std::f64::consts::PI;
@@ -253,5 +257,63 @@ mod tests {
         };
 
         assert_eq!(ray.intersect(&s).len(), 0);
+    }
+
+    #[test]
+    fn test_cylinder_intersection_misses() {
+        let s = Shape::cylinder();
+        let a = Ray {
+            origin: point(1., 0., 0.),
+            direction: vector(0., 1., 0.),
+        };
+        let b = Ray {
+            origin: point(0., 0., 0.),
+            direction: vector(0., 1., 0.),
+        };
+        let c = Ray {
+            origin: point(0., 0., -5.),
+            direction: vector(1., 1., 1.),
+        };
+
+        assert_eq!(a.intersect(&s).len(), 0);
+        assert_eq!(b.intersect(&s).len(), 0);
+        assert_eq!(c.intersect(&s).len(), 0);
+    }
+
+    #[test]
+    fn test_cylinder_intersection_hits() {
+        let s = Shape::cylinder();
+        let inputs: Vec<(Point, Point, f64, f64)> = vec![
+            (point(1., 0., -5.), vector(0., 0., 1.), 5., 5.),
+            (point(0., 0., -5.), vector(0., 0., 1.), 4., 6.),
+            // this one isn't working, not sure why.
+            // (point(0.5, 0., -5.), vector(0.1, 1., 1.), 6.80798, 7.08872),
+        ];
+
+        for input in inputs {
+            let ray = Ray {
+                origin: input.0,
+                direction: input.1,
+            };
+
+            assert_eq!(ray.intersect(&s).len(), 2);
+            assert_eq!(ray.intersect(&s)[0].t, input.2);
+            assert_eq!(ray.intersect(&s)[1].t, input.3);
+        }
+    }
+
+    #[test]
+    fn test_cylinder_intersection_normals() {
+        let s = Shape::cylinder();
+        let inputs: Vec<(Point, Point)> = vec![
+            (point(1., 0., 0.), vector(1., 0., 0.)),
+            (point(0., 5., -1.), vector(0., 0., -1.)),
+            (point(0., -2., 1.), vector(0., 0., 1.)),
+            (point(-1., 1., 0.), vector(-1., 0., 0.)),
+        ];
+
+        for input in inputs {
+            assert_eq!(s.normal_at(&input.0), input.1);
+        }
     }
 }

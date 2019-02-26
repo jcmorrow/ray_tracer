@@ -156,3 +156,62 @@ impl Intersectable for Cube {
         ]
     }
 }
+
+#[derive(Clone, Debug)]
+pub struct Cylinder {}
+
+impl Cylinder {
+    fn check_axis(&self, origin: f64, direction: f64) -> (f64, f64) {
+        let tmin: f64;
+        let tmax: f64;
+        let tmin_numerator = -1. - origin;
+        let tmax_numerator = 1. - origin;
+        if direction.abs() >= EPSILON {
+            tmin = tmin_numerator / direction;
+            tmax = tmax_numerator / direction;
+        } else {
+            tmin = tmin_numerator * INFINITY;
+            tmax = tmax_numerator * INFINITY;
+        }
+        if tmin > tmax {
+            (tmax, tmin)
+        } else {
+            (tmin, tmax)
+        }
+    }
+}
+
+impl Intersectable for Cylinder {
+    fn local_normal_at(&self, local_point: &Point) -> Point {
+        point(local_point.x, 0., local_point.z)
+    }
+
+    fn local_intersect(&self, ray: &Ray, object: &Shape) -> Vec<Intersection> {
+        let a = ray.direction.x.powi(2) + ray.direction.z.powi(2);
+        if a.abs() < EPSILON {
+            return Vec::new();
+        }
+
+        let b = 2. * ray.origin.x * ray.direction.x + 2. * ray.origin.z * ray.direction.z;
+        let c = ray.origin.x.powi(2) + ray.origin.z.powi(2) - 1.;
+
+        let disc = b.powi(2) - 4. * a * c;
+
+        if disc < 0. {
+            return Vec::new();
+        } else {
+            let a2 = 2. * a;
+            let disc_sqrt = disc.sqrt();
+            vec![
+                Intersection {
+                    object: object.clone(),
+                    t: (-b - disc_sqrt) / a2,
+                },
+                Intersection {
+                    object: object.clone(),
+                    t: (-b + disc_sqrt) / a2,
+                },
+            ]
+        }
+    }
+}
