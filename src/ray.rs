@@ -24,8 +24,14 @@ impl Ray {
         for object in &world.objects {
             intersections.extend(self.intersect(object));
         }
-        intersections.sort_by(|a, b| a.t.partial_cmp(&b.t).unwrap());
-        intersections
+        let mut positive_intersections: Vec<Intersection> = Vec::new();
+        for intersection in intersections {
+            if intersection.t > 0. {
+                positive_intersections.push(intersection)
+            }
+        }
+        positive_intersections.sort_by(|a, b| a.t.partial_cmp(&b.t).unwrap());
+        positive_intersections
     }
 
     pub fn transform(&self, transformation: Matrix4) -> Ray {

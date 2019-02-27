@@ -4,8 +4,7 @@ use camera::Camera;
 use color::Color;
 use material::Material;
 use matrix::Matrix4;
-use pattern::Perlin;
-use pattern::{Checker, Gradient, Solid, Stripe};
+use pattern::*;
 use point::point;
 use shape::Shape;
 use std::f64::consts::PI;
@@ -34,10 +33,8 @@ fn main() -> std::io::Result<()> {
     let mut world = World::new();
     world.objects = Vec::new();
 
-    let mut sphere = Shape::sphere();
     let mut cube = Shape::cube();
-    cube.transform = Matrix4::rotation_x(PI / 4.0);
-    sphere.transform = Matrix4::translation(2.0, 0.0, 0.0);
+    cube.transform = Matrix4::rotation_x(PI / 2.0).multiply(&Matrix4::translation(0., 0., 1.));
 
     let mut material = Material::new();
     material.reflective = 0.0;
@@ -51,14 +48,8 @@ fn main() -> std::io::Result<()> {
     // material.pattern = Box::new(perlin_pattern.clone());
     material.pattern = Box::new(pattern.clone());
     cube.material = material.clone();
-    sphere.material = material.clone();
 
-    let mut floor = Shape::plane();
-    floor.transform = Matrix4::translation(0.0, -1.0, 0.0);
-
-    world.objects.push(floor);
     world.objects.push(cube);
-    // world.objects.push(sphere);
 
     let mut camera = Camera::new(600, 400, PI / 3.0);
     let from = point(0.0, 1.5, -5.0);
