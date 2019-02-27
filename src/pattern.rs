@@ -6,6 +6,7 @@ use point::point;
 use point::Point;
 use shape::Shape;
 use std::fmt::Debug;
+use utilities::equal;
 
 pub trait Patternable: Debug + PatternableClone {
     fn color_at(&self, point: &Point) -> Color;
@@ -50,7 +51,7 @@ impl Stripe {
 
 impl Patternable for Stripe {
     fn color_at(&self, point: &Point) -> Color {
-        if point.x.floor().abs() % 2.0 == 0.0 {
+        if equal(point.x.floor().abs() % 2.0, 0.0) {
             self.a
         } else {
             self.b
@@ -168,7 +169,8 @@ impl Checker {
 
 impl Patternable for Checker {
     fn color_at(&self, point: &Point) -> Color {
-        if (point.x.floor() + point.y.floor() + point.z.floor()) % 2. == 0. {
+        let sum = point.x.round() + point.y.round() + point.z.round();
+        if equal(sum.abs() % 2., 0.) {
             self.a
         } else {
             self.b
@@ -310,6 +312,7 @@ mod tests {
 
         assert_eq!(color, Color::black());
     }
+
     #[test]
     fn test_color_at_gradient() {
         let p = Gradient::new(Color::white(), Color::black());
