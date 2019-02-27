@@ -165,22 +165,17 @@ pub struct Cylinder {
 }
 
 impl Cylinder {
-    fn check_axis(&self, origin: f64, direction: f64) -> (f64, f64) {
-        let tmin: f64;
-        let tmax: f64;
-        let tmin_numerator = -1. - origin;
-        let tmax_numerator = 1. - origin;
-        if direction.abs() >= EPSILON {
-            tmin = tmin_numerator / direction;
-            tmax = tmax_numerator / direction;
-        } else {
-            tmin = tmin_numerator * INFINITY;
-            tmax = tmax_numerator * INFINITY;
+    fn minimum(&self) -> f64 {
+        match self.minimum {
+            Some(n) => n,
+            None => -INFINITY,
         }
-        if tmin > tmax {
-            (tmax, tmin)
-        } else {
-            (tmin, tmax)
+    }
+
+    fn maximum(&self) -> f64 {
+        match self.maximum {
+            Some(n) => n,
+            None => INFINITY,
         }
     }
 
@@ -193,19 +188,11 @@ impl Cylinder {
 
     fn check_caps(&self, ray: &Ray, object: &Shape) -> Vec<Intersection> {
         let mut hits: Vec<Intersection> = Vec::new();
-        let has_max = match self.maximum {
-            Some(_) => true,
-            None => false,
-        };
-        let has_min = match self.minimum {
-            Some(_) => true,
-            None => false,
-        };
-        if !has_min || !has_max || !self.closed || ray.direction.y.abs() < EPSILON {
+        if !self.closed || ray.direction.y.abs() < EPSILON {
             return hits;
         }
 
-        let mut t = (self.minimum.unwrap() - ray.origin.y) / ray.direction.y;
+        let mut t = (self.minimum() - ray.origin.y) / ray.direction.y;
         if self.check_cap(&ray, t) {
             hits.push(Intersection {
                 object: object.clone(),
@@ -213,7 +200,7 @@ impl Cylinder {
             });
         }
 
-        t = (self.maximum.unwrap() - ray.origin.y) / ray.direction.y;
+        t = (self.maximum() - ray.origin.y) / ray.direction.y;
         if self.check_cap(&ray, t) {
             hits.push(Intersection {
                 object: object.clone(),
@@ -227,7 +214,14 @@ impl Cylinder {
 
 impl Intersectable for Cylinder {
     fn local_normal_at(&self, local_point: &Point) -> Point {
-        point(local_point.x, 0., local_point.z)
+        let dist = local_point.x.powi(2) + local_point.z.powi(2);
+        if dist < 1. && local_point.y >= self.maximum() - EPSILON {
+            return vector(0., 1., 0.);
+        }
+        if dist < 1. && local_point.y <= self.minimum() + EPSILON {
+            return vector(0., -1., 0.);
+        }
+        vector(local_point.x, 0., local_point.z)
     }
 
     fn local_intersect(&self, ray: &Ray, object: &Shape) -> Vec<Intersection> {
@@ -246,35 +240,29 @@ impl Intersectable for Cylinder {
         } else {
             let a2 = 2. * a;
             let disc_sqrt = disc.sqrt();
-            let t0 = Intersection {
-                object: object.clone(),
-                t: (-b - disc_sqrt) / a2,
-            };
-            let t1 = Intersection {
-                object: object.clone(),
-                t: (-b + disc_sqrt) / a2,
-            };
-            let has_max = match self.maximum {
-                Some(_) => true,
-                None => false,
-            };
-            let has_min = match self.minimum {
-                Some(_) => true,
-                None => false,
-            };
-            let mut hits: Vec<Intersection> = Vec::new();
-            if (!has_min || t0.t > self.minimum.unwrap())
-                && (!has_max || t0.t < self.maximum.unwrap())
-            {
-                hits.push(t0);
+            let mut t0 = (-b - disc_sqrt) / a2;
+            let mut t1 = (-b + disc_sqrt) / a2;
+            if t1 < t0 {
+                let tmp = t1;
+                t1 = t0;
+                t0 = tmp;
             }
-            if (!has_min || t1.t > self.minimum.unwrap())
-                && (!has_max || t1.t < self.maximum.unwrap())
-            {
-                hits.push(t1);
+            let mut hits: Vec<Intersection> = Vec::new();
+            let y0 = ray.origin.y + t0 * ray.direction.y;
+            if y0 > self.minimum() && y0 < self.maximum() {
+                hits.push(Intersection {
+                    t: t0,
+                    object: object.clone(),
+                });
+            }
+            let y1 = ray.origin.y + t1 * ray.direction.y;
+            if y1 > self.minimum() && y1 < self.maximum() {
+                hits.push(Intersection {
+                    t: t1,
+                    object: object.clone(),
+                });
             }
             hits.extend(self.check_caps(&ray, &object));
-            hits.truncate(2);
             hits
         }
     }

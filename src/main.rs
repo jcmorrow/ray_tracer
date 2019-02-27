@@ -2,10 +2,10 @@ extern crate noise;
 
 use camera::Camera;
 use color::Color;
+use intersectable::*;
 use material::Material;
 use matrix::Matrix4;
-use pattern::Perlin;
-use pattern::{Checker, Gradient, Solid, Stripe};
+use pattern::*;
 use point::point;
 use shape::Shape;
 use std::f64::consts::PI;
@@ -35,8 +35,14 @@ fn main() -> std::io::Result<()> {
     world.objects = Vec::new();
 
     let mut sphere = Shape::sphere();
-    let mut cube = Shape::cylinder();
-    // cube.transform = Matrix4::rotation_x(PI / 4.0);
+    let c = Cylinder {
+        minimum: Some(0.),
+        maximum: Some(1.),
+        closed: true,
+    };
+    let mut plane = Shape::plane();
+    // cylinder.intersectable = Box::new(c);
+    plane.transform = Matrix4::rotation_z(PI / 10000000.0);
     sphere.transform = Matrix4::translation(2.0, 0.0, 0.0);
 
     let mut material = Material::new();
@@ -50,18 +56,21 @@ fn main() -> std::io::Result<()> {
     // perlin_pattern.factor = 0.025;
     // material.pattern = Box::new(perlin_pattern.clone());
     material.pattern = Box::new(pattern.clone());
-    cube.material = material.clone();
+    plane.material = material.clone();
     sphere.material = material.clone();
 
     let mut floor = Shape::plane();
     floor.transform = Matrix4::translation(0.0, -1.0, 0.0);
+    let mut wall = Shape::plane();
+    wall.transform = Matrix4::rotation_x(PI * 1. / 10.).multiply(&Matrix4::translation(0., 0., 1.));
 
-    world.objects.push(floor);
-    world.objects.push(cube);
+    // world.objects.push(floor);
+    world.objects.push(plane);
+    // world.objects.push(wall);
     // world.objects.push(sphere);
 
     let mut camera = Camera::new(800, 400, PI / 2.0);
-    let from = point(0.0, 5., -5.0);
+    let from = point(0.0, 2., -5.0);
     let to = point(0.0, 0.0, 0.0);
     let up = point(0.0, 1.0, 0.0);
     camera.transform = TransformationMatrix::new(&from, &to, &up);

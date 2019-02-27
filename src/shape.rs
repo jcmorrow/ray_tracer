@@ -142,6 +142,15 @@ mod tests {
     }
 
     #[test]
+    fn test_plane_normal_at_when_rotated() {
+        let mut s = Shape::plane();
+        s.transform = Matrix4::rotation_x(PI / 2.);
+
+        println!("{:?}", s.normal_at(&point(0., 0., 0.)));
+        assert!(s.normal_at(&point(0., 0., 0.)).eq(&point(0., 0., 1.)));
+    }
+
+    #[test]
     fn test_plane_intersection() {
         let s = Shape::plane();
         let r = Ray {
@@ -382,12 +391,34 @@ mod tests {
         ];
 
         for input in inputs {
-            println!("{:?}", input);
             let ray = Ray {
                 origin: input.0,
                 direction: input.1.normalize(),
             };
             assert_eq!(ray.intersect(&s).len(), input.2);
+        }
+    }
+
+    #[test]
+    fn test_cylinder_normal_at() {
+        let mut s = Shape::cylinder();
+        let cylinder = Cylinder {
+            minimum: Some(1.),
+            maximum: Some(2.),
+            closed: true,
+        };
+        s.intersectable = Box::new(cylinder);
+        let inputs: Vec<(Point, Point)> = vec![
+            (point(0., 1., 0.), vector(0., -1., 0.)),
+            (point(0.5, 1., 0.), vector(0., -1., 0.)),
+            (point(0., 1., 0.5), vector(0., -1., 0.)),
+            (point(0., 2., 0.), vector(0., 1., 0.)),
+            (point(0.5, 2., 0.0), vector(0., 1., 0.)),
+            (point(0., 2., 0.5), vector(0., 1., 0.)),
+        ];
+
+        for input in inputs {
+            assert_eq!(s.normal_at(&input.0), input.1);
         }
     }
 }

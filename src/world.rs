@@ -58,7 +58,8 @@ impl World {
         );
 
         let reflected_color = self.reflected_color(&precompute, remaining);
-        surface_color.add(&reflected_color)
+        // surface_color.add(&reflected_color)
+        surface_color
     }
 
     pub fn color_at(&self, ray: &Ray, remaining: i32) -> Color {
