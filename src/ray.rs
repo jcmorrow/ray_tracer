@@ -16,7 +16,7 @@ impl Ray {
 
     pub fn intersect(&self, shape: &Shape) -> Vec<Intersection> {
         let ray = self.transform(shape.transform.inverse());
-        return shape.intersectable.local_intersect(&ray, shape);
+        shape.intersectable.local_intersect(&ray, shape)
     }
 
     pub fn intersect_world(&self, world: &World) -> Vec<Intersection> {
@@ -178,6 +178,7 @@ mod tests {
             direction: vector(0.0, 0.0, 1.0),
         };
         let s = Shape {
+            parent: None,
             transform: Matrix4::scaling(2.0, 2.0, 2.0),
             material: Material::new(),
             intersectable: Box::new(Sphere {}),
@@ -197,6 +198,7 @@ mod tests {
             direction: vector(0.0, 0.0, 1.0),
         };
         let s = Shape {
+            parent: None,
             intersectable: Box::new(Sphere {}),
             transform: Matrix4::translation(5.0, 0.0, 0.0),
             material: Material::new(),

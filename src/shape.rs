@@ -1,11 +1,15 @@
+use bounds::Bounds;
 use intersectable::*;
 use material::Material;
 use matrix::Matrix4;
 use matrix::IDENTITY_MATRIX;
-use point::Point;
+use point::{vector, Point};
+use std::cell::RefCell;
+use std::rc::Rc;
 
 #[derive(Debug, Clone)]
 pub struct Shape {
+    pub parent: Option<Rc<RefCell<Shape>>>,
     pub transform: Matrix4,
     pub material: Material,
     pub intersectable: Box<Intersectable>,
@@ -14,6 +18,7 @@ pub struct Shape {
 impl Shape {
     pub fn sphere() -> Shape {
         Shape {
+            parent: None,
             transform: IDENTITY_MATRIX,
             material: Material::new(),
             intersectable: Box::new(Sphere {}),
@@ -22,6 +27,7 @@ impl Shape {
 
     pub fn plane() -> Shape {
         Shape {
+            parent: None,
             transform: IDENTITY_MATRIX,
             material: Material::new(),
             intersectable: Box::new(Plane {}),
@@ -30,6 +36,7 @@ impl Shape {
 
     pub fn cube() -> Shape {
         Shape {
+            parent: None,
             transform: IDENTITY_MATRIX,
             material: Material::new(),
             intersectable: Box::new(Cube {}),
@@ -38,22 +45,61 @@ impl Shape {
 
     pub fn triangle(a: Point, b: Point, c: Point) -> Shape {
         Shape {
+            parent: None,
             transform: IDENTITY_MATRIX,
             material: Material::new(),
             intersectable: Box::new(Triangle::new(a, b, c)),
         }
     }
 
+    pub fn group() -> Rc<RefCell<Shape>> {
+        Rc::new(RefCell::new(Shape {
+            parent: None,
+            transform: IDENTITY_MATRIX,
+            material: Material::new(),
+            intersectable: Box::new(Group::new()),
+        }))
+    }
+
+    pub fn add_group(group: Rc<RefCell<Shape>>, shape: Rc<RefCell<Shape>>) {
+        shape.borrow_mut().parent = Some(group.clone());
+        group.borrow_mut().intersectable.add(shape.clone());
+    }
+
+    pub fn add_shape(group: Rc<RefCell<Shape>>, mut shape: Shape) {
+        shape.parent = Some(group.clone());
+        group
+            .borrow_mut()
+            .intersectable
+            .add(Rc::new(RefCell::new(shape)));
+    }
+
     pub fn normal_at(&self, world_point: &Point) -> Point {
         let local_point = self.transform.inverse().multiply_point(&world_point);
         let local_normal = self.intersectable.local_normal_at(&local_point);
-        let mut world_normal = self
-            .transform
-            .inverse()
-            .transpose()
-            .multiply_point(&local_normal);
-        world_normal.w = 0.;
-        world_normal.normalize()
+        self.normal_to_world(&local_normal)
+    }
+
+    pub fn world_to_object(&self, world_point: &Point) -> Point {
+        let point = match self.parent {
+            Some(ref p) => p.borrow().world_to_object(world_point),
+            None => *world_point,
+        };
+        self.transform.inverse().multiply_point(&point)
+    }
+
+    pub fn normal_to_world(&self, normal: &Point) -> Point {
+        let mut local_normal = self.transform.inverse().transpose().multiply_point(&normal);
+        local_normal.w = 0.;
+        if let Some(ref p) = self.parent {
+            p.borrow().normal_to_world(&local_normal).normalize()
+        } else {
+            local_normal.normalize()
+        }
+    }
+
+    pub fn bounds(&self) -> Bounds {
+        self.intersectable.bounds(self)
     }
 }
 
@@ -86,6 +132,7 @@ mod tests {
     fn test_shape_with_non_default_transform() {
         let t = Matrix4::translation(2., 3., 4.);
         let s = Shape {
+            parent: None,
             transform: t,
             material: Material::new(),
             intersectable: Box::new(Sphere {}),
@@ -111,6 +158,7 @@ mod tests {
     #[test]
     fn test_shape_normal_at_with_transformation() {
         let s = Shape {
+            parent: None,
             transform: Matrix4::translation(0., 1., 0.),
             material: Material::new(),
             intersectable: Box::new(Sphere {}),
@@ -121,6 +169,7 @@ mod tests {
             .equal(&vector(0., 0.70711, -0.70711)));
 
         let s = Shape {
+            parent: None,
             intersectable: Box::new(Sphere {}),
             transform: Matrix4::scaling(1., 0.5, 1.).multiply(&Matrix4::rotation_z(PI / 5.)),
             material: Material::new(),

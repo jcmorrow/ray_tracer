@@ -1,17 +1,23 @@
-// taken completely from https://stackoverflow.com/questions/30353462/how-to-clone-a-struct-storing-a-boxed-trait-object
+use bounds::Bounds;
 use intersection::Intersection;
+use point::bounds;
 use point::point;
 use point::vector;
 use point::Point;
 use ray::Ray;
 use shape::Shape;
+use std::cell::RefCell;
 use std::f64::INFINITY;
 use std::fmt::Debug;
+use std::rc::Rc;
 use utilities::EPSILON;
+use utilities::{max, min};
 
 pub trait Intersectable: Debug + IntersectableClone {
     fn local_normal_at(&self, point: &Point) -> Point;
+    fn add(&mut self, shape: Rc<RefCell<Shape>>);
     fn local_intersect(&self, ray: &Ray, object: &Shape) -> Vec<Intersection>;
+    fn bounds(&self, shape: &Shape) -> Bounds;
 }
 
 pub trait IntersectableClone {
@@ -39,6 +45,12 @@ pub struct Sphere {}
 impl Intersectable for Sphere {
     fn local_normal_at(&self, local_point: &Point) -> Point {
         local_point.sub(&point(0., 0., 0.))
+    }
+
+    fn add(&mut self, _shape: Rc<RefCell<Shape>>) {}
+
+    fn bounds(&self, _shape: &Shape) -> Bounds {
+        Bounds::new(-1.0, 1.0, -1.0, 1.0, -1.0, 1.0)
     }
 
     fn local_intersect(&self, ray: &Ray, object: &Shape) -> Vec<Intersection> {
@@ -71,6 +83,12 @@ pub struct Plane {}
 impl Intersectable for Plane {
     fn local_normal_at(&self, _local_point: &Point) -> Point {
         point(0., 1., 0.)
+    }
+
+    fn add(&mut self, _shape: Rc<RefCell<Shape>>) {}
+
+    fn bounds(&self, _shape: &Shape) -> Bounds {
+        Bounds::new(-INFINITY, INFINITY, 0.0, 0.0, -INFINITY, INFINITY)
     }
 
     fn local_intersect(&self, ray: &Ray, object: &Shape) -> Vec<Intersection> {
@@ -129,6 +147,12 @@ impl Intersectable for Cube {
         }
     }
 
+    fn add(&mut self, _shape: Rc<RefCell<Shape>>) {}
+
+    fn bounds(&self, _shape: &Shape) -> Bounds {
+        Bounds::new(-1.0, 1.0, -1.0, 1.0, -1.0, 1.0)
+    }
+
     fn local_intersect(&self, ray: &Ray, object: &Shape) -> Vec<Intersection> {
         let (xmin, xmax) = self.check_axis(ray.origin.x, ray.direction.x);
         let (ymin, ymax) = self.check_axis(ray.origin.y, ray.direction.y);
@@ -137,8 +161,8 @@ impl Intersectable for Cube {
         let mins: Vec<f64> = vec![xmin, ymin, zmin];
         let maxs: Vec<f64> = vec![xmax, ymax, zmax];
 
-        let tmin = mins.iter().cloned().fold(0. / 0., f64::max);
-        let tmax = maxs.iter().cloned().fold(0. / 0., f64::min);
+        let tmin = max(&mins);
+        let tmax = min(&maxs);
 
         if tmin > tmax {
             return Vec::new();
@@ -177,7 +201,7 @@ impl Triangle {
             p3,
             e1,
             e2,
-            normal: e2.cross(&e1).normalize(),
+            normal: e1.cross(&e2).normalize(),
         }
     }
 }
@@ -187,10 +211,22 @@ impl Intersectable for Triangle {
         self.normal
     }
 
+    fn add(&mut self, _shape: Rc<RefCell<Shape>>) {}
+
+    fn bounds(&self, _shape: &Shape) -> Bounds {
+        Bounds::new(
+            min(&vec![self.p1.x, self.p2.x, self.p3.x]),
+            max(&vec![self.p1.x, self.p2.x, self.p3.x]),
+            min(&vec![self.p1.y, self.p2.y, self.p3.y]),
+            max(&vec![self.p1.y, self.p2.y, self.p3.y]),
+            min(&vec![self.p1.z, self.p2.z, self.p3.z]),
+            max(&vec![self.p1.z, self.p2.z, self.p3.z]),
+        )
+    }
+
     fn local_intersect(&self, ray: &Ray, object: &Shape) -> Vec<Intersection> {
         let dir_cross_e2 = ray.direction.cross(&self.e2);
         let det = self.e1.dot(&dir_cross_e2);
-        println!("{:?}", det.abs());
         if det.abs() < EPSILON {
             return Vec::new();
         }
@@ -218,15 +254,154 @@ impl Intersectable for Triangle {
     }
 }
 
+#[derive(Clone, Debug)]
+pub struct Group {
+    children: Vec<Rc<RefCell<Shape>>>,
+}
+
+impl Group {
+    pub fn new() -> Group {
+        Group {
+            children: Vec::new(),
+        }
+    }
+}
+
+impl Intersectable for Group {
+    fn local_normal_at(&self, _local_point: &Point) -> Point {
+        vector(1., 0., 0.)
+    }
+
+    fn add(&mut self, shape: Rc<RefCell<Shape>>) {
+        self.children.push(shape);
+    }
+
+    fn bounds(&self, shape: &Shape) -> Bounds {
+        let mut child_bounds: Vec<Point> = Vec::new();
+        for ref child in self.children.iter() {
+            let bounds = child.borrow().bounds();
+            child_bounds.push(child.borrow().transform.multiply_point(&bounds.min));
+            child_bounds.push(child.borrow().transform.multiply_point(&bounds.max));
+        }
+        let mut local_bounds: Bounds = bounds(child_bounds);
+        local_bounds.min = shape.transform.multiply_point(&local_bounds.min);
+        local_bounds.max = shape.transform.multiply_point(&local_bounds.max);
+        bounds(vec![local_bounds.min, local_bounds.max])
+    }
+
+    fn local_intersect(&self, ray: &Ray, object: &Shape) -> Vec<Intersection> {
+        if !object.bounds().hits(ray) {
+            return Vec::new();
+        }
+        let mut intersects: Vec<Intersection> = Vec::new();
+        for obj in &self.children {
+            intersects.extend(ray.intersect(&obj.borrow()));
+        }
+        intersects
+    }
+}
+
 #[cfg(test)]
 mod tests {
+    use intersectable::Group;
     use intersectable::*;
+    use material::Material;
+    use matrix::Matrix4;
+    use matrix::IDENTITY_MATRIX;
+    use std::f64::consts::PI;
+
     #[test]
     fn test_new_triangle() {
         let s = Triangle::new(point(0., 1., 0.), point(-1., 0., 0.), point(1., 0., 0.));
 
         assert_eq!(s.e1, vector(-1., -1., 0.));
         assert_eq!(s.e2, vector(1., -1., 0.));
-        assert_eq!(s.normal, vector(0., 0., -1.));
+        assert_eq!(s.normal, vector(0., 0., 1.));
+    }
+
+    #[test]
+    fn test_group_intersect_misses() {
+        let g = Group::new();
+        let s = Shape {
+            parent: None,
+            intersectable: Box::new(g),
+            material: Material::new(),
+            transform: IDENTITY_MATRIX,
+        };
+        let ray = Ray {
+            origin: point(0., 0., 0.),
+            direction: vector(0., 0., 1.),
+        };
+
+        assert_eq!(ray.intersect(&s).len(), 0);
+    }
+
+    #[test]
+    fn test_group_intersect_hits() {
+        let mut g = Shape::group();
+        let s1 = Shape::sphere();
+        let mut s2 = Shape::sphere();
+        s2.transform = Matrix4::translation(0., 0., -3.);
+        let mut s3 = Shape::sphere();
+        s3.transform = Matrix4::translation(5., 0., 0.);
+        let ray = Ray {
+            origin: point(0., 0., -5.),
+            direction: vector(0., 0., 1.),
+        };
+
+        Shape::add_shape(g.clone(), s1);
+        Shape::add_shape(g.clone(), s2);
+        Shape::add_shape(g.clone(), s3);
+
+        assert_eq!(ray.intersect(&g.borrow()).len(), 4);
+    }
+
+    #[test]
+    fn test_group_local_to_world_space() {
+        let g1 = Shape::group();
+        g1.borrow_mut().transform = Matrix4::rotation_y(PI / 2.);
+        let g2 = Shape::group();
+        g2.borrow_mut().transform = Matrix4::scaling(2., 2., 2.);
+        let mut s = Shape::sphere();
+        s.transform = Matrix4::translation(5., 0., 0.);
+        // I can't do the adding, because it consumes the shape
+        s.parent = Some(g1.clone());
+        Shape::add_group(g2.clone(), g1);
+
+        assert_eq!(s.world_to_object(&point(-2., 0., -10.)), point(0., 0., -1.));
+    }
+
+    #[test]
+    fn test_group_local_to_world_normal() {
+        let g1 = Shape::group();
+        g1.borrow_mut().transform = Matrix4::rotation_y(PI / 2.);
+        let g2 = Shape::group();
+        g2.borrow_mut().transform = Matrix4::scaling(1., 2., 3.);
+        let mut s = Shape::sphere();
+        s.transform = Matrix4::translation(5., 0., 0.);
+        // I can't do the adding, because it consumes the shape
+        s.parent = Some(g2.clone());
+        let sqrt_3_over_3 = 3_f64.sqrt() / 3.;
+        let v = vector(sqrt_3_over_3, sqrt_3_over_3, sqrt_3_over_3);
+        Shape::add_group(g1.clone(), g2);
+
+        assert_eq!(s.normal_to_world(&v), vector(0.28571, 0.42857, -0.85714));
+    }
+
+    #[test]
+    fn test_group_normal_at_child() {
+        let g1 = Shape::group();
+        g1.borrow_mut().transform = Matrix4::rotation_y(PI / 2.);
+        let g2 = Shape::group();
+        g2.borrow_mut().transform = Matrix4::scaling(1., 2., 3.);
+        let mut s = Shape::sphere();
+        s.transform = Matrix4::translation(5., 0., 0.);
+        // I can't do the adding, because it consumes the shape
+        s.parent = Some(g2.clone());
+        let sqrt_3_over_3 = 3_f64.sqrt() / 3.;
+        let v = vector(sqrt_3_over_3, sqrt_3_over_3, sqrt_3_over_3);
+        Shape::add_group(g1.clone(), g2);
+
+        assert_eq!(s.normal_at(&v), vector(0.28571, 0.42857, -0.85714));
     }
 }

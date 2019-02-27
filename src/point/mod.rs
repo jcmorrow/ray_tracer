@@ -1,3 +1,4 @@
+use bounds::Bounds;
 use utilities::equal;
 
 #[derive(Copy, Clone, Debug)]
@@ -10,7 +11,7 @@ pub struct Point {
 
 impl PartialEq for Point {
     fn eq(&self, other: &Point) -> bool {
-        return equal(self.x, other.x) && equal(self.y, other.y) && equal(self.z, other.z);
+        equal(self.x, other.x) && equal(self.y, other.y) && equal(self.z, other.z)
     }
 }
 
@@ -26,8 +27,36 @@ pub fn empty_point() -> Point {
     return point(0.0, 0.0, 0.0);
 }
 
-fn empty_vector() -> Point {
+pub fn empty_vector() -> Point {
     return vector(0.0, 0.0, 0.0);
+}
+
+pub fn bounds(points: Vec<Point>) -> Bounds {
+    let mut bounds = Bounds {
+        min: points[0],
+        max: points[0],
+    };
+    for point in points {
+        if point.x < bounds.min.x {
+            bounds.min.x = point.x;
+        }
+        if point.y < bounds.min.y {
+            bounds.min.y = point.y;
+        }
+        if point.z < bounds.min.z {
+            bounds.min.z = point.z;
+        }
+        if point.x > bounds.max.x {
+            bounds.max.x = point.x;
+        }
+        if point.y > bounds.max.y {
+            bounds.max.y = point.y;
+        }
+        if point.z > bounds.max.z {
+            bounds.max.z = point.z;
+        }
+    }
+    bounds
 }
 
 impl Point {

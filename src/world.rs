@@ -23,7 +23,6 @@ impl World {
             objects: vec![
                 Shape {
                     intersectable: Box::new(Sphere {}),
-                    transform: IDENTITY_MATRIX,
                     material: Material {
                         ambient: 0.1,
                         diffuse: 0.7,
@@ -32,10 +31,13 @@ impl World {
                         pattern: Box::new(Solid::new(Color::new(0.8, 1.0, 0.6))),
                         reflective: 0.0,
                     },
+                    parent: None,
+                    transform: IDENTITY_MATRIX,
                 },
                 Shape {
                     intersectable: Box::new(Sphere {}),
                     material: Material::new(),
+                    parent: None,
                     transform: Matrix4::scaling(0.5, 0.5, 0.5),
                 },
             ],
