@@ -156,3 +156,77 @@ impl Intersectable for Cube {
         ]
     }
 }
+
+#[derive(Clone, Debug)]
+pub struct Triangle {
+    pub e1: Point,
+    pub e2: Point,
+    pub normal: Point,
+    pub p1: Point,
+    pub p2: Point,
+    pub p3: Point,
+}
+
+impl Triangle {
+    pub fn new(p1: Point, p2: Point, p3: Point) -> Triangle {
+        let e1 = p2.sub(&p1);
+        let e2 = p3.sub(&p1);
+        Triangle {
+            p1,
+            p2,
+            p3,
+            e1,
+            e2,
+            normal: e2.cross(&e1).normalize(),
+        }
+    }
+}
+
+impl Intersectable for Triangle {
+    fn local_normal_at(&self, _local_point: &Point) -> Point {
+        self.normal
+    }
+
+    fn local_intersect(&self, ray: &Ray, object: &Shape) -> Vec<Intersection> {
+        let dir_cross_e2 = ray.direction.cross(&self.e2);
+        let det = self.e1.dot(&dir_cross_e2);
+        println!("{:?}", det.abs());
+        if det.abs() < EPSILON {
+            return Vec::new();
+        }
+
+        let f = 1. / det;
+        let p1_to_origin = ray.origin.sub(&self.p1);
+        let u = f * p1_to_origin.dot(&dir_cross_e2);
+        if u < 0. || u > 1. {
+            return Vec::new();
+        }
+
+        let origin_cross_e1 = p1_to_origin.cross(&self.e1);
+        let v = f * ray.direction.dot(&origin_cross_e1);
+
+        if v < 0. || (u + v) > 1. {
+            return Vec::new();
+        }
+
+        let t = f * self.e2.dot(&origin_cross_e1);
+
+        vec![Intersection {
+            object: object.clone(),
+            t,
+        }]
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use intersectable::*;
+    #[test]
+    fn test_new_triangle() {
+        let s = Triangle::new(point(0., 1., 0.), point(-1., 0., 0.), point(1., 0., 0.));
+
+        assert_eq!(s.e1, vector(-1., -1., 0.));
+        assert_eq!(s.e2, vector(1., -1., 0.));
+        assert_eq!(s.normal, vector(0., 0., -1.));
+    }
+}

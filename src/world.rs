@@ -248,7 +248,14 @@ mod tests {
         };
         let comps = intersection.precompute(&ray);
         let color = world.reflected_color(&comps, 10);
-        assert_eq!(color, Color::new(0.295186, 0.295186, 0.295186));
+        assert_eq!(
+            color,
+            Color::new(
+                0.19033232037953468,
+                0.23791540047441834,
+                0.14274924028465102
+            )
+        );
     }
 
     #[test]
@@ -271,6 +278,6 @@ mod tests {
             direction: vector(0.0, 1.0, 0.0),
         };
 
-        assert_eq!(world.color_at(&ray, 10), Color::new(0.08, 0.1, 0.06));
+        assert_eq!(world.color_at(&ray, 10), Color::new(0.1, 0.1, 0.1));
     }
 }
