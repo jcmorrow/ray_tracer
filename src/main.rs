@@ -33,32 +33,40 @@ fn main() -> std::io::Result<()> {
     let mut world = World::new();
     world.objects = Vec::new();
 
-    let mut cube = Shape::cube();
-    cube.transform = Matrix4::rotation_x(PI / 2.)
-        .multiply(&Matrix4::translation(0., 0., 1.))
-        .multiply(&Matrix4::scaling(2., 2., 2.));
+    let mut sphere = Shape::sphere();
+    sphere.transform = Matrix4::translation(-2.5, 0., 4.).multiply(&Matrix4::scaling(2., 2., 2.));
 
     let mut floor = Shape::plane();
-    floor.transform = Matrix4::translation(0., -4., 0.);
+    floor.transform = Matrix4::translation(0., -2., 0.);
 
-    let mut material = Material::new();
-    material.reflective = 0.;
+    let mut sphere_material = Material::new();
+    sphere_material.reflective = 0.1;
+    let mut floor_material = Material::new();
+    floor_material.reflective = 0.1;
 
     let mut pattern = Checker::new(Color::new(0.2, 0.65, 0.9), Color::white());
+    let mut gradient = Gradient::new(Color::new(0.2, 0.65, 0.9), Color::white());
+    sphere_material.pattern = Box::new(gradient.clone());
     pattern.transform = Matrix4::scaling(0.25, 0.25, 0.25);
 
-    // let mut perlin_pattern = Perlin::new(Box::new(pattern.clone()));
-    // perlin_pattern.factor = 0.25;
-    // material.pattern = Box::new(perlin_pattern.clone());
-    material.pattern = Box::new(pattern.clone());
-    cube.material = material.clone();
-    floor.material = material.clone();
+    let mut perlin_pattern = Perlin::new(Box::new(pattern.clone()));
+    perlin_pattern.factor = 0.25;
+    floor_material.pattern = Box::new(pattern.clone());
+    sphere.material = sphere_material.clone();
+    floor.material = floor_material.clone();
 
-    world.objects.push(cube);
+    world.objects.push(sphere.clone());
+
+    sphere.transform = sphere
+        .transform
+        .multiply(&Matrix4::translation(2.5, 0., 0.));
+
+    world.objects.push(sphere.clone());
+
     world.objects.push(floor);
 
-    let mut camera = Camera::new(1000, 600, PI / 4.);
-    let from = point(0., 3.5, -5.);
+    let mut camera = Camera::new(1400, 1000, PI / 4.);
+    let from = point(0., 0., -5.);
     let to = point(0., 0., 0.);
     let up = point(0., 1., 0.);
     camera.transform = TransformationMatrix::new(&from, &to, &up);
