@@ -20,6 +20,7 @@ mod intersectable;
 mod intersection;
 mod material;
 mod matrix;
+mod obj_parser;
 mod pattern;
 mod point;
 mod point_light;
