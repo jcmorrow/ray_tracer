@@ -170,7 +170,7 @@ impl ObjParser {
         }
     }
 
-    fn parse(text: &str) -> ObjParser {
+    pub fn parse(text: &str) -> ObjParser {
         let mut parsed_lines: Vec<Vec<ObjNode>> = Vec::new();
         let mut obj_parser = ObjParser {
             vertices: Vec::new(),
@@ -278,4 +278,21 @@ v 1 1 0
             0.5
         );
     }
+
+    // #[test]
+    // fn test_parsing_vertex_data() {
+    //     let str = "v -1 1 0
+    // v 1 0 0
+    // v 1 0 0
+    // v 1 1 0
+    // v 0 2 0
+    // f 1 2 3 4 5";
+    //     let parser = ObjParser::parse(&str);
+
+    //     assert_eq!(parser.vertices.len(), 4);
+    //     assert_eq!(parser.vertices[0], point(-1., 1., 0.));
+    //     assert_eq!(parser.vertices[1], point(-1., 0.5, 0.));
+    //     assert_eq!(parser.vertices[2], point(1., 0., 0.));
+    //     assert_eq!(parser.vertices[3], point(1., 1., 0.));
+    // }
 }

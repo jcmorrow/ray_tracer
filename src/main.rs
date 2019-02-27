@@ -4,10 +4,12 @@ use camera::Camera;
 use color::Color;
 use material::Material;
 use matrix::Matrix4;
+use obj_parser::ObjParser;
 use pattern::*;
 use point::point;
 use shape::Shape;
 use std::f64::consts::PI;
+use std::fs;
 use std::fs::File;
 use std::io::prelude::*;
 use transformation_matrix::TransformationMatrix;
@@ -31,6 +33,11 @@ mod utilities;
 mod world;
 
 fn main() -> std::io::Result<()> {
+    let mut obj = File::open("ray_cast.ppm")?;
+    let obj_parser = ObjParser::parse(&fs::read_to_string("fixtures/teapot.obj")?);
+
+    println!("{:?}", obj_parser);
+
     let mut world = World::new();
     world.objects = Vec::new();
 
@@ -72,9 +79,9 @@ fn main() -> std::io::Result<()> {
     let up = point(0., 1., 0.);
     camera.transform = TransformationMatrix::new(&from, &to, &up);
 
-    let canvas = camera.render(&world);
+    // let canvas = camera.render(&world);
 
-    let mut file = File::create("ray_cast.ppm")?;
-    file.write_all(&canvas.render_ppm().into_bytes())?;
+    // let mut file = File::create("ray_cast.ppm")?;
+    // file.write_all(&canvas.render_ppm().into_bytes())?;
     Ok(())
 }
