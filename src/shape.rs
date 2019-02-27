@@ -1,7 +1,4 @@
-use intersectable::Cube;
-use intersectable::Intersectable;
-use intersectable::Plane;
-use intersectable::Sphere;
+use intersectable::*;
 use material::Material;
 use matrix::Matrix4;
 use matrix::IDENTITY_MATRIX;
@@ -39,6 +36,14 @@ impl Shape {
         }
     }
 
+    pub fn triangle(a: Point, b: Point, c: Point) -> Shape {
+        Shape {
+            transform: IDENTITY_MATRIX,
+            material: Material::new(),
+            intersectable: Box::new(Triangle::new(a, b, c)),
+        }
+    }
+
     pub fn normal_at(&self, world_point: &Point) -> Point {
         let local_point = self.transform.inverse().multiply_point(&world_point);
         let local_normal = self.intersectable.local_normal_at(&local_point);
@@ -60,7 +65,7 @@ impl PartialEq for Shape {
 
 #[cfg(test)]
 mod tests {
-    use intersectable::Sphere;
+    use intersectable::*;
     use material::Material;
     use matrix::Matrix4;
     use matrix::IDENTITY_MATRIX;
@@ -253,5 +258,42 @@ mod tests {
         };
 
         assert_eq!(ray.intersect(&s).len(), 0);
+    }
+
+    fn triangle() -> Shape {
+        Shape::triangle(point(0., 1., 0.), point(-1., 0., 0.), point(1., 0., 0.))
+    }
+
+    #[test]
+    fn test_triangle_intersection_misses() {
+        let t = triangle();
+        let ray1 = Ray {
+            origin: point(0., -1., -2.),
+            direction: vector(0., 1., 0.),
+        };
+        let ray2 = Ray {
+            origin: point(1., 1., -2.),
+            direction: vector(0., 0., 1.),
+        };
+        let ray3 = Ray {
+            origin: point(0., -1., -2.),
+            direction: vector(0., 0., 1.),
+        };
+
+        assert_eq!(ray1.intersect(&t).len(), 0);
+        assert_eq!(ray2.intersect(&t).len(), 0);
+        assert_eq!(ray3.intersect(&t).len(), 0);
+    }
+
+    #[test]
+    fn test_triangle_intersection_hits() {
+        let t = triangle();
+        let ray = Ray {
+            origin: point(0., 0.5, -2.),
+            direction: vector(0., 0., 1.),
+        };
+
+        assert_eq!(ray.intersect(&t).len(), 1);
+        assert_eq!(ray.intersect(&t)[0].t, 2.);
     }
 }
