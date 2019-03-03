@@ -1,4 +1,3 @@
-// taken completely from https://stackoverflow.com/questions/30353462/how-to-clone-a-struct-storing-a-boxed-trait-object
 use intersection::Intersection;
 use point::point;
 use point::vector;
@@ -177,7 +176,7 @@ impl Triangle {
             p3,
             e1,
             e2,
-            normal: e2.cross(&e1).normalize(),
+            normal: e1.cross(&e2).normalize(),
         }
     }
 }
@@ -190,7 +189,6 @@ impl Intersectable for Triangle {
     fn local_intersect(&self, ray: &Ray, object: &Shape) -> Vec<Intersection> {
         let dir_cross_e2 = ray.direction.cross(&self.e2);
         let det = self.e1.dot(&dir_cross_e2);
-        println!("{:?}", det.abs());
         if det.abs() < EPSILON {
             return Vec::new();
         }
@@ -218,15 +216,131 @@ impl Intersectable for Triangle {
     }
 }
 
+#[derive(Clone, Debug)]
+pub struct Group {
+    shape: &'static Shape,
+    children: Vec<Shape>,
+}
+
+impl Group {
+    pub fn new(shape: &'static Shape) -> Group {
+        Group {
+            shape,
+            children: Vec::new(),
+        }
+    }
+
+    pub fn add(&mut self, shape: Shape) {
+        shape.parent = Some(self.shape);
+        self.children.push(shape);
+    }
+}
+
+impl Intersectable for Group {
+    fn local_normal_at(&self, _local_point: &Point) -> Point {
+        vector(1., 0., 0.)
+    }
+
+    fn local_intersect(&self, ray: &Ray, _object: &Shape) -> Vec<Intersection> {
+        let mut intersects: Vec<Intersection> = Vec::new();
+        for obj in &self.children {
+            intersects.extend(ray.intersect(obj));
+        }
+        intersects
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use intersectable::*;
+    use material::Material;
+    use matrix::Matrix4;
+    use matrix::IDENTITY_MATRIX;
+    use std::f64::consts::PI;
+
     #[test]
     fn test_new_triangle() {
         let s = Triangle::new(point(0., 1., 0.), point(-1., 0., 0.), point(1., 0., 0.));
 
         assert_eq!(s.e1, vector(-1., -1., 0.));
         assert_eq!(s.e2, vector(1., -1., 0.));
-        assert_eq!(s.normal, vector(0., 0., -1.));
+        assert_eq!(s.normal, vector(0., 0., 1.));
+    }
+
+    #[test]
+    fn test_group() {
+        let mut g = Group::new();
+        g.add(Shape::sphere());
+
+        assert_eq!(g.children.len(), 1);
+    }
+
+    #[test]
+    fn test_group_intersect_misses() {
+        let g = Group::new();
+        let s = Shape {
+            parent: None,
+            intersectable: Box::new(g),
+            material: Material::new(),
+            transform: IDENTITY_MATRIX,
+        };
+        let ray = Ray {
+            origin: point(0., 0., 0.),
+            direction: vector(0., 0., 1.),
+        };
+
+        assert_eq!(ray.intersect(&s).len(), 0);
+    }
+
+    #[test]
+    fn test_group_intersect_hits() {
+        let mut g = Group::new();
+        let s1 = Shape::sphere();
+        let mut s2 = Shape::sphere();
+        s2.transform = Matrix4::translation(0., 0., -3.);
+        let mut s3 = Shape::sphere();
+        s2.transform = Matrix4::translation(5., 0., 0.);
+        let ray = Ray {
+            origin: point(0., 0., -5.),
+            direction: vector(0., 0., 1.),
+        };
+        g.add(s1);
+        g.add(s2);
+        g.add(s3);
+        let s = Shape {
+            parent: None,
+            intersectable: Box::new(g),
+            material: Material::new(),
+            transform: IDENTITY_MATRIX,
+        };
+
+        assert_eq!(ray.intersect(&s).len(), 4);
+    }
+
+    #[test]
+    fn test_group_local_to_world_space() {
+        let mut g1 = Group::new();
+        let mut g2 = Group::new();
+        let mut s = Shape::sphere();
+        s.transform = Matrix4::scaling(2., 2., 2.);
+        g2.add(s);
+        let s2 = Shape {
+            parent: None,
+            intersectable: Box::new(g2),
+            material: Material::new(),
+            transform: Matrix4::rotation_y(PI / 2.),
+        };
+        g1.add(s2);
+        let s1 = Shape {
+            parent: None,
+            intersectable: Box::new(g1),
+            material: Material::new(),
+            transform: Matrix4::rotation_y(PI / 2.),
+        };
+
+        assert_eq!(
+            s1.world_to_object(&point(-2., 0., -10.)),
+            point(0., 0., -1.)
+        );
     }
 }

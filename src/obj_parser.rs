@@ -1,13 +1,14 @@
 use point::{point, Point};
-use std::collections::HashMap;
+use shape::Shape;
 
 #[derive(Debug, PartialEq, Clone)]
 pub enum ObjNodeType {
     Decimal,
     Integer,
     MinusSign,
+    ShapeStart,
     Space,
-    VectorStart,
+    VertexStart,
 }
 
 #[derive(Debug, Clone)]
@@ -18,6 +19,7 @@ pub struct ObjNode {
 
 #[derive(Debug)]
 pub struct ObjParser {
+    pub shapes: Vec<Shape>,
     vertices: Vec<Point>,
 }
 
@@ -26,33 +28,45 @@ struct ObjLineParser {
 }
 
 impl ObjLineParser {
-    fn run(&mut self) -> Option<Point> {
+    fn run(&mut self, vertices: &[Point]) -> (Vec<Point>, Vec<Shape>) {
+        let mut points: Vec<Point> = Vec::new();
+        let mut shapes: Vec<Shape> = Vec::new();
+        if self.peek(ObjNodeType::VertexStart) {
+            if let Some(vector) = self.parse_point() {
+                points.push(vector);
+            }
+        } else if self.peek(ObjNodeType::ShapeStart) {
+            if let Some(shape) = self.parse_shape(vertices) {
+                shapes.push(shape);
+            }
+        }
+        (points, shapes)
+    }
+
+    fn parse_shape(&mut self, vertices: &[Point]) -> Option<Shape> {
+        self.consume(ObjNodeType::ShapeStart)?;
+        self.consume_whitespace();
+        let ai = self.consume_integer()? as usize - 1;
+        let a = vertices[ai];
+        self.consume_whitespace();
+        let bi = self.consume_integer()? as usize - 1;
+        self.consume_whitespace();
+        let b = vertices[bi];
+        let ci = self.consume_integer()? as usize - 1;
+        self.consume_whitespace();
+        let c = vertices[ci];
+        Some(Shape::triangle(a, b, c))
+    }
+
+    fn parse_point(&mut self) -> Option<Point> {
         let mut p = point(0., 0., 0.);
-        match self.consume(ObjNodeType::VectorStart) {
-            None => return None,
-            _ => (),
-        };
+        self.consume(ObjNodeType::VertexStart)?;
         self.consume_whitespace();
-        match self.consume_float() {
-            None => return None,
-            Some(s) => {
-                p.x = s;
-            }
-        };
+        p.x = self.consume_float()?;
         self.consume_whitespace();
-        match self.consume_float() {
-            None => return None,
-            Some(s) => {
-                p.y = s;
-            }
-        };
+        p.y = self.consume_float()?;
         self.consume_whitespace();
-        match self.consume_float() {
-            None => return None,
-            Some(s) => {
-                p.z = s;
-            }
-        };
+        p.z = self.consume_float()?;
 
         Some(p)
     }
@@ -67,10 +81,7 @@ impl ObjLineParser {
         let mut negative = false;
         let mut decimal = false;
         let mut float = String::new();
-        while match self.line.iter().next() {
-            Some(_) => true,
-            None => false,
-        } {
+        while let Some(_) = self.line.iter().next() {
             if self.peek(ObjNodeType::MinusSign) {
                 self.consume(ObjNodeType::MinusSign);
                 negative = true;
@@ -78,27 +89,44 @@ impl ObjLineParser {
             if self.peek(ObjNodeType::Integer) {
                 float.push(self.consume(ObjNodeType::Integer).unwrap().value);
             } else if self.peek(ObjNodeType::Decimal) {
-                if decimal == false {
-                    decimal = true;
-                } else {
+                if decimal {
                     panic!("Malformed float, two decimal points");
+                } else {
+                    decimal = true;
                 }
                 float.push(self.consume(ObjNodeType::Decimal).unwrap().value);
             } else {
                 break;
             }
         }
-        if float.len() > 0 {
-            return Some(ObjParser::float_from_string(float, negative));
+        if !float.is_empty() {
+            Some(ObjParser::float_from_string(float, negative))
         } else {
-            return None;
+            None
+        }
+    }
+
+    fn consume_integer(&mut self) -> Option<i32> {
+        let mut int = String::new();
+        while let Some(_) = self.line.iter().next() {
+            if self.peek(ObjNodeType::Integer) {
+                int.push(self.consume(ObjNodeType::Integer)?.value);
+            } else {
+                break;
+            }
+        }
+        if !int.is_empty() {
+            Some(ObjParser::integer_from_string(int))
+        } else {
+            None
         }
     }
 
     fn peek(&self, node_type: ObjNodeType) -> bool {
-        match self.line.iter().next() {
-            Some(n) => return n.node_type == node_type,
-            None => false,
+        if let Some(node) = self.line.iter().next() {
+            node.node_type == node_type
+        } else {
+            false
         }
     }
 
@@ -119,61 +147,29 @@ impl ObjLineParser {
 
 impl ObjParser {
     fn float_from_string(s: String, negative: bool) -> f64 {
-        println!("{}", s);
-        let mut decimal = false;
-        let mut whole: Vec<i32> = Vec::new();
-        let mut part: Vec<i32> = Vec::new();
-        let mut total = 0.;
-        let mut place = 1;
-        let mut character_to_integer: HashMap<char, u8> = HashMap::new();
-        for i in 0..10 {
-            character_to_integer.entry((i + 48) as char).or_insert(i);
-        }
-        for c in s.chars() {
-            if c == '.' {
-                decimal = true;
-            } else {
-                if decimal {
-                    println!("c: {}", c);
-                    part.push(*character_to_integer.get(&c).unwrap() as i32);
-                } else {
-                    whole.push(*character_to_integer.get(&c).unwrap() as i32);
-                }
-            }
-        }
-
-        println!("whole {:?}", whole);
-        println!("part {:?}", part);
-
-        for n in whole.iter().rev() {
-            total = total + *n as f64 * place as f64;
-            place = place * 10;
-        }
-        place = 10;
-        for n in part.iter() {
-            println!("n {}, place {}", n, place);
-            total = total + *n as f64 / place as f64;
-            place = place * 10;
-        }
+        let num = s.parse::<f64>().ok().unwrap();
         if negative {
-            total * -1.
+            num * -1.
         } else {
-            total
+            num
         }
     }
 
+    fn integer_from_string(s: String) -> i32 {
+        s.parse::<i32>().ok().unwrap()
+    }
+
     fn parse_line(&mut self, line: Vec<ObjNode>) {
-        let output = ObjLineParser { line }.run();
-        match output {
-            Some(v) => self.vertices.push(v),
-            None => (),
-        }
+        let output = ObjLineParser { line }.run(&self.vertices);
+        self.vertices.extend(output.0);
+        self.shapes.extend(output.1);
     }
 
     pub fn parse(text: &str) -> ObjParser {
         let mut parsed_lines: Vec<Vec<ObjNode>> = Vec::new();
         let mut obj_parser = ObjParser {
             vertices: Vec::new(),
+            shapes: Vec::new(),
         };
         for line in text.lines() {
             let mut parsed: Vec<ObjNode> = Vec::new();
@@ -186,7 +182,13 @@ impl ObjParser {
                 let c = maybe_char.unwrap();
                 if c == 'v' {
                     parsed.push(ObjNode {
-                        node_type: ObjNodeType::VectorStart,
+                        node_type: ObjNodeType::VertexStart,
+                        value: c,
+                    });
+                }
+                if c == 'f' {
+                    parsed.push(ObjNode {
+                        node_type: ObjNodeType::ShapeStart,
                         value: c,
                     });
                 }
@@ -196,14 +198,16 @@ impl ObjParser {
                         value: c,
                     });
                 }
-                if (c == '0'
+                if c == '0'
                     || c == '1'
                     || c == '2'
+                    || c == '3'
+                    || c == '4'
                     || c == '5'
                     || c == '6'
                     || c == '7'
                     || c == '8'
-                    || c == '9')
+                    || c == '9'
                 {
                     parsed.push(ObjNode {
                         node_type: ObjNodeType::Integer,
@@ -266,6 +270,14 @@ v 1 1 0
     }
 
     #[test]
+    fn test_parsing_incomplete_data() {
+        let str = "v -1 1";
+        let parser = ObjParser::parse(&str);
+
+        assert_eq!(parser.vertices.len(), 0);
+    }
+
+    #[test]
     fn test_parsing_float_from_string() {
         assert_eq!(ObjParser::float_from_string(String::from("1"), false), 1.);
         assert_eq!(ObjParser::float_from_string(String::from("2.0"), false), 2.);
@@ -279,20 +291,20 @@ v 1 1 0
         );
     }
 
-    // #[test]
-    // fn test_parsing_vertex_data() {
-    //     let str = "v -1 1 0
-    // v 1 0 0
-    // v 1 0 0
-    // v 1 1 0
-    // v 0 2 0
-    // f 1 2 3 4 5";
-    //     let parser = ObjParser::parse(&str);
+    #[test]
+    fn test_parsing_face_data() {
+        let str = "v -1 1 0
+v -1 0 0
+v 1 0 0
+v 1 1 0
+v 0 2 0
+f 1 2 3 4 5";
+        let parser = ObjParser::parse(&str);
 
-    //     assert_eq!(parser.vertices.len(), 4);
-    //     assert_eq!(parser.vertices[0], point(-1., 1., 0.));
-    //     assert_eq!(parser.vertices[1], point(-1., 0.5, 0.));
-    //     assert_eq!(parser.vertices[2], point(1., 0., 0.));
-    //     assert_eq!(parser.vertices[3], point(1., 1., 0.));
-    // }
+        assert_eq!(parser.shapes.len(), 1);
+        assert_eq!(
+            parser.shapes[0],
+            Shape::triangle(point(1., 1., 0.), point(1., 1., 0.), point(1., 1., 0.))
+        );
+    }
 }

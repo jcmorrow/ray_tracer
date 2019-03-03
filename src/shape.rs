@@ -2,10 +2,12 @@ use intersectable::*;
 use material::Material;
 use matrix::Matrix4;
 use matrix::IDENTITY_MATRIX;
+use point::point;
 use point::Point;
 
 #[derive(Debug, Clone)]
 pub struct Shape {
+    pub parent: Option<&'static Shape>,
     pub transform: Matrix4,
     pub material: Material,
     pub intersectable: Box<Intersectable>,
@@ -14,6 +16,7 @@ pub struct Shape {
 impl Shape {
     pub fn sphere() -> Shape {
         Shape {
+            parent: None,
             transform: IDENTITY_MATRIX,
             material: Material::new(),
             intersectable: Box::new(Sphere {}),
@@ -22,6 +25,7 @@ impl Shape {
 
     pub fn plane() -> Shape {
         Shape {
+            parent: None,
             transform: IDENTITY_MATRIX,
             material: Material::new(),
             intersectable: Box::new(Plane {}),
@@ -30,6 +34,7 @@ impl Shape {
 
     pub fn cube() -> Shape {
         Shape {
+            parent: None,
             transform: IDENTITY_MATRIX,
             material: Material::new(),
             intersectable: Box::new(Cube {}),
@@ -38,10 +43,17 @@ impl Shape {
 
     pub fn triangle(a: Point, b: Point, c: Point) -> Shape {
         Shape {
+            parent: None,
             transform: IDENTITY_MATRIX,
             material: Material::new(),
             intersectable: Box::new(Triangle::new(a, b, c)),
         }
+    }
+
+    pub fn group() -> Shape {
+        let mut s = Shape::cube();
+        s.intersectable = Box::new(Group::new(&s));
+        s
     }
 
     pub fn normal_at(&self, world_point: &Point) -> Point {
@@ -54,6 +66,14 @@ impl Shape {
             .multiply_point(&local_normal);
         world_normal.w = 0.;
         world_normal.normalize()
+    }
+
+    pub fn world_to_object(&self, world_point: &Point) -> Point {
+        if let Some(parent) = &self.parent {
+            parent.transform.inverse().multiply_point(world_point)
+        } else {
+            *world_point
+        }
     }
 }
 
@@ -86,6 +106,7 @@ mod tests {
     fn test_shape_with_non_default_transform() {
         let t = Matrix4::translation(2., 3., 4.);
         let s = Shape {
+            parent: None,
             transform: t,
             material: Material::new(),
             intersectable: Box::new(Sphere {}),
@@ -111,6 +132,7 @@ mod tests {
     #[test]
     fn test_shape_normal_at_with_transformation() {
         let s = Shape {
+            parent: None,
             transform: Matrix4::translation(0., 1., 0.),
             material: Material::new(),
             intersectable: Box::new(Sphere {}),
@@ -121,6 +143,7 @@ mod tests {
             .equal(&vector(0., 0.70711, -0.70711)));
 
         let s = Shape {
+            parent: None,
             intersectable: Box::new(Sphere {}),
             transform: Matrix4::scaling(1., 0.5, 1.).multiply(&Matrix4::rotation_z(PI / 5.)),
             material: Material::new(),

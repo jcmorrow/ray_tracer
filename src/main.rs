@@ -33,10 +33,7 @@ mod utilities;
 mod world;
 
 fn main() -> std::io::Result<()> {
-    let mut obj = File::open("ray_cast.ppm")?;
-    let obj_parser = ObjParser::parse(&fs::read_to_string("fixtures/teapot.obj")?);
-
-    println!("{:?}", obj_parser);
+    let tea_pot = ObjParser::parse(&fs::read_to_string("fixtures/teapot.obj")?);
 
     let mut world = World::new();
     world.objects = Vec::new();
@@ -45,7 +42,7 @@ fn main() -> std::io::Result<()> {
     sphere.transform = Matrix4::translation(-2.5, 0., 4.).multiply(&Matrix4::scaling(2., 2., 2.));
 
     let mut floor = Shape::plane();
-    floor.transform = Matrix4::translation(0., -2., 0.);
+    // floor.transform = Matrix4::translation(0., -2., 0.);
 
     let mut sphere_material = Material::new();
     sphere_material.reflective = 0.1;
@@ -63,25 +60,28 @@ fn main() -> std::io::Result<()> {
     sphere.material = sphere_material.clone();
     floor.material = floor_material.clone();
 
-    world.objects.push(sphere.clone());
+    for mut shape in tea_pot.shapes {
+        shape.transform = Matrix4::translation(0., 0., 4.).multiply(&Matrix4::rotation_y(PI));
+        shape.material = floor_material.clone();
+        world.objects.push(shape)
+    }
 
     sphere.transform = sphere
         .transform
         .multiply(&Matrix4::translation(2.5, 0., 0.));
 
-    world.objects.push(sphere.clone());
-
     world.objects.push(floor);
 
     let mut camera = Camera::new(1400, 1000, PI / 4.);
-    let from = point(0., 0., -5.);
+    let from = point(0., 2., -5.);
     let to = point(0., 0., 0.);
     let up = point(0., 1., 0.);
     camera.transform = TransformationMatrix::new(&from, &to, &up);
 
-    // let canvas = camera.render(&world);
+    let canvas = camera.render(&world);
 
-    // let mut file = File::create("ray_cast.ppm")?;
-    // file.write_all(&canvas.render_ppm().into_bytes())?;
+    let mut file = File::create("ray_cast.ppm")?;
+
+    file.write_all(&canvas.render_ppm().into_bytes())?;
     Ok(())
 }
