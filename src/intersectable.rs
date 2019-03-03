@@ -6,10 +6,12 @@ use ray::Ray;
 use shape::Shape;
 use std::f64::INFINITY;
 use std::fmt::Debug;
+use std::rc::Rc;
 use utilities::EPSILON;
 
 pub trait Intersectable: Debug + IntersectableClone {
     fn local_normal_at(&self, point: &Point) -> Point;
+    fn add(&mut self, shape: Shape, owner: Rc<Shape>);
     fn local_intersect(&self, ray: &Ray, object: &Shape) -> Vec<Intersection>;
 }
 
@@ -39,6 +41,8 @@ impl Intersectable for Sphere {
     fn local_normal_at(&self, local_point: &Point) -> Point {
         local_point.sub(&point(0., 0., 0.))
     }
+
+    fn add(&mut self, _shape: Shape, _owner: Rc<Shape>) {}
 
     fn local_intersect(&self, ray: &Ray, object: &Shape) -> Vec<Intersection> {
         let shape_to_ray = ray.origin.sub(&point(0., 0., 0.));
@@ -71,6 +75,8 @@ impl Intersectable for Plane {
     fn local_normal_at(&self, _local_point: &Point) -> Point {
         point(0., 1., 0.)
     }
+
+    fn add(&mut self, _shape: Shape, _owner: Rc<Shape>) {}
 
     fn local_intersect(&self, ray: &Ray, object: &Shape) -> Vec<Intersection> {
         if ray.direction.y.abs() < EPSILON {
@@ -127,6 +133,8 @@ impl Intersectable for Cube {
             vector(0., 0., local_point.z)
         }
     }
+
+    fn add(&mut self, _shape: Shape, _owner: Rc<Shape>) {}
 
     fn local_intersect(&self, ray: &Ray, object: &Shape) -> Vec<Intersection> {
         let (xmin, xmax) = self.check_axis(ray.origin.x, ray.direction.x);
@@ -186,6 +194,8 @@ impl Intersectable for Triangle {
         self.normal
     }
 
+    fn add(&mut self, _shape: Shape, _owner: Rc<Shape>) {}
+
     fn local_intersect(&self, ray: &Ray, object: &Shape) -> Vec<Intersection> {
         let dir_cross_e2 = ray.direction.cross(&self.e2);
         let det = self.e1.dot(&dir_cross_e2);
@@ -218,27 +228,25 @@ impl Intersectable for Triangle {
 
 #[derive(Clone, Debug)]
 pub struct Group {
-    shape: &'static Shape,
     children: Vec<Shape>,
 }
 
 impl Group {
-    pub fn new(shape: &'static Shape) -> Group {
+    pub fn new() -> Group {
         Group {
-            shape,
             children: Vec::new(),
         }
-    }
-
-    pub fn add(&mut self, shape: Shape) {
-        shape.parent = Some(self.shape);
-        self.children.push(shape);
     }
 }
 
 impl Intersectable for Group {
     fn local_normal_at(&self, _local_point: &Point) -> Point {
         vector(1., 0., 0.)
+    }
+
+    fn add(&mut self, mut shape: Shape, owner: Rc<Shape>) {
+        shape.parent = Some(owner);
+        self.children.push(shape);
     }
 
     fn local_intersect(&self, ray: &Ray, _object: &Shape) -> Vec<Intersection> {
@@ -252,6 +260,7 @@ impl Intersectable for Group {
 
 #[cfg(test)]
 mod tests {
+    use intersectable::Group;
     use intersectable::*;
     use material::Material;
     use matrix::Matrix4;
@@ -265,14 +274,6 @@ mod tests {
         assert_eq!(s.e1, vector(-1., -1., 0.));
         assert_eq!(s.e2, vector(1., -1., 0.));
         assert_eq!(s.normal, vector(0., 0., 1.));
-    }
-
-    #[test]
-    fn test_group() {
-        let mut g = Group::new();
-        g.add(Shape::sphere());
-
-        assert_eq!(g.children.len(), 1);
     }
 
     #[test]
@@ -294,53 +295,40 @@ mod tests {
 
     #[test]
     fn test_group_intersect_hits() {
-        let mut g = Group::new();
+        let mut g = Shape::group();
         let s1 = Shape::sphere();
         let mut s2 = Shape::sphere();
         s2.transform = Matrix4::translation(0., 0., -3.);
         let mut s3 = Shape::sphere();
-        s2.transform = Matrix4::translation(5., 0., 0.);
+        s3.transform = Matrix4::translation(5., 0., 0.);
         let ray = Ray {
             origin: point(0., 0., -5.),
             direction: vector(0., 0., 1.),
         };
-        g.add(s1);
-        g.add(s2);
-        g.add(s3);
-        let s = Shape {
-            parent: None,
-            intersectable: Box::new(g),
-            material: Material::new(),
-            transform: IDENTITY_MATRIX,
-        };
+        let f = Shape::group();
 
-        assert_eq!(ray.intersect(&s).len(), 4);
+        Shape::add(&mut *g, s1, f);
+        // g.add(s2, g.clone());
+        // g.add(s3, g.clone());
+
+        assert_eq!(ray.intersect(&g).len(), 4);
     }
 
-    #[test]
-    fn test_group_local_to_world_space() {
-        let mut g1 = Group::new();
-        let mut g2 = Group::new();
-        let mut s = Shape::sphere();
-        s.transform = Matrix4::scaling(2., 2., 2.);
-        g2.add(s);
-        let s2 = Shape {
-            parent: None,
-            intersectable: Box::new(g2),
-            material: Material::new(),
-            transform: Matrix4::rotation_y(PI / 2.),
-        };
-        g1.add(s2);
-        let s1 = Shape {
-            parent: None,
-            intersectable: Box::new(g1),
-            material: Material::new(),
-            transform: Matrix4::rotation_y(PI / 2.),
-        };
+    //     #[test]
+    //     fn test_group_local_to_world_space() {
+    //         let group = Shape::group();
+    //         let mut s = Shape::sphere();
+    //         s.transform = Matrix4::scaling(2., 2., 2.);
+    //         let mut s2 = Shape::group();
+    //         s2.transform = Matrix4::rotation_y(PI / 2.);
+    //         Shape::add(s2, s);
+    //         let mut s1 = Shape::group();
+    //         s1.transform = Matrix4::rotation_y(PI / 2.);
+    //         Shape::add(s1, s2);
 
-        assert_eq!(
-            s1.world_to_object(&point(-2., 0., -10.)),
-            point(0., 0., -1.)
-        );
-    }
+    //         assert_eq!(
+    //             s1.world_to_object(&point(-2., 0., -10.)),
+    //             point(0., 0., -1.)
+    //         );
+    //     }
 }

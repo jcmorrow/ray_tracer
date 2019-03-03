@@ -2,12 +2,12 @@ use intersectable::*;
 use material::Material;
 use matrix::Matrix4;
 use matrix::IDENTITY_MATRIX;
-use point::point;
 use point::Point;
+use std::rc::Rc;
 
 #[derive(Debug, Clone)]
 pub struct Shape {
-    pub parent: Option<&'static Shape>,
+    pub parent: Option<Rc<Shape>>,
     pub transform: Matrix4,
     pub material: Material,
     pub intersectable: Box<Intersectable>,
@@ -50,10 +50,17 @@ impl Shape {
         }
     }
 
-    pub fn group() -> Shape {
-        let mut s = Shape::cube();
-        s.intersectable = Box::new(Group::new(&s));
-        s
+    pub fn group() -> Rc<Shape> {
+        Rc::new(Shape {
+            parent: None,
+            transform: IDENTITY_MATRIX,
+            material: Material::new(),
+            intersectable: Box::new(Group::new()),
+        })
+    }
+
+    pub fn add(group: &mut Shape, shape: Shape, owner: Rc<Shape>) {
+        group.intersectable.add(shape, owner);
     }
 
     pub fn normal_at(&self, world_point: &Point) -> Point {

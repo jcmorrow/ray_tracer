@@ -7,6 +7,7 @@ pub enum ObjNodeType {
     Integer,
     MinusSign,
     ShapeStart,
+    Slash,
     Space,
     VertexStart,
 }
@@ -111,6 +112,9 @@ impl ObjLineParser {
         while let Some(_) = self.line.iter().next() {
             if self.peek(ObjNodeType::Integer) {
                 int.push(self.consume(ObjNodeType::Integer)?.value);
+            } else if self.peek(ObjNodeType::Slash) {
+                self.consume(ObjNodeType::Slash);
+                self.consume_integer();
             } else {
                 break;
             }
@@ -223,6 +227,12 @@ impl ObjParser {
                 if c == '-' {
                     parsed.push(ObjNode {
                         node_type: ObjNodeType::MinusSign,
+                        value: c,
+                    });
+                }
+                if c == '/' {
+                    parsed.push(ObjNode {
+                        node_type: ObjNodeType::Slash,
                         value: c,
                     });
                 }
