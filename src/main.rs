@@ -1,6 +1,8 @@
+extern crate chrono;
 extern crate noise;
 
 use camera::Camera;
+use chrono::prelude::*;
 use color::Color;
 use material::Material;
 use matrix::Matrix4;
@@ -12,6 +14,7 @@ use std::f64::consts::PI;
 use std::fs;
 use std::fs::File;
 use std::io::prelude::*;
+use std::time::{Duration, SystemTime};
 use transformation_matrix::TransformationMatrix;
 use world::World;
 
@@ -34,8 +37,9 @@ mod utilities;
 mod world;
 
 fn main() -> std::io::Result<()> {
-    let mut king = ObjParser::parse(&fs::read_to_string("fixtures/king.obj")?);
-
+    let mut intersections = 0;
+    let mut king = ObjParser::parse(&fs::read_to_string("fixtures/tree.obj")?);
+    king.transform = Matrix4::scaling(0.05, 0.05, 0.05);
     let mut world = World::new();
     world.objects = Vec::new();
 
@@ -44,15 +48,15 @@ fn main() -> std::io::Result<()> {
 
     let mut floor = Shape::plane();
     // floor.transform = Matrix4::translation(0., -2., 0.);
-    //
+
     let mut king_material = Material::new();
-    king_material.reflective = 0.8;
+    king_material.reflective = 0.0;
     king_material.pattern = Box::new(Solid::new(Color::white()));
 
     let mut sphere_material = Material::new();
     sphere_material.reflective = 0.1;
     let mut floor_material = Material::new();
-    floor_material.reflective = 0.1;
+    floor_material.reflective = 0.0;
 
     let mut pattern = Checker::new(Color::new(0.2, 0.65, 0.9), Color::white());
     let gradient = Gradient::new(Color::new(0.2, 0.65, 0.9), Color::white());
@@ -65,10 +69,10 @@ fn main() -> std::io::Result<()> {
     sphere.material = sphere_material.clone();
     floor.material = floor_material.clone();
 
-    // world.objects.push(king);
+    world.objects.push(king);
     world.objects.push(floor);
 
-    let mut camera = Camera::new(1400, 1400, PI / 8.);
+    let mut camera = Camera::new(10, 10, PI / 8.);
     let from = point(0., 2.5, -5.);
     let to = point(0., 0., 2.);
     let up = point(0., 1., 0.);
@@ -76,7 +80,9 @@ fn main() -> std::io::Result<()> {
 
     let canvas = camera.render(&world);
 
-    let mut file = File::create("ray_cast.ppm")?;
+    let now = Local::now();
+    let filename = format!("output/{}.ppm", now.format("%Y-%m-%d_%H-%M-%S"));
+    let mut file = File::create(filename)?;
 
     file.write_all(&canvas.render_ppm().into_bytes())?;
     Ok(())

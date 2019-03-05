@@ -2,7 +2,10 @@ use intersection::Intersection;
 use matrix::Matrix4;
 use point::Point;
 use shape::Shape;
+use std::cell::RefCell;
 use world::World;
+
+thread_local!(static ray_count: RefCell<i64> = RefCell::new(0));
 
 pub struct Ray {
     pub origin: Point,
@@ -15,6 +18,13 @@ impl Ray {
     }
 
     pub fn intersect(&self, shape: &Shape) -> Vec<Intersection> {
+        ray_count.with(|count_cell| {
+            let plus = *count_cell.borrow() + 1;
+            count_cell.replace(plus);
+            if *count_cell.borrow() % 1000 == 0 {
+                println!("{:?}", *count_cell.borrow());
+            }
+        });
         let ray = self.transform(shape.transform.inverse());
         shape.intersectable.local_intersect(&ray, shape)
     }

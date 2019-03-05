@@ -284,8 +284,8 @@ impl Intersectable for Group {
             child_bounds.push(child.borrow().transform.multiply_point(&bounds.max));
         }
         let mut local_bounds: Bounds = bounds(child_bounds);
-        local_bounds.min = shape.transform.multiply_point(&local_bounds.min);
-        local_bounds.max = shape.transform.multiply_point(&local_bounds.max);
+        local_bounds.min = shape.transform.inverse().multiply_point(&local_bounds.min);
+        local_bounds.max = shape.transform.inverse().multiply_point(&local_bounds.max);
         bounds(vec![local_bounds.min, local_bounds.max])
     }
 
