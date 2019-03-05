@@ -21,7 +21,7 @@ impl Ray {
         ray_count.with(|count_cell| {
             let plus = *count_cell.borrow() + 1;
             count_cell.replace(plus);
-            if *count_cell.borrow() % 1000 == 0 {
+            if *count_cell.borrow() % 10000 == 0 {
                 println!("{:?}", *count_cell.borrow());
             }
         });
