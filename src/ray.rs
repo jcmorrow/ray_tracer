@@ -1,5 +1,5 @@
 use intersectable::Intersectable;
-use intersectable::Sphere;
+use intersectable::IntersectableType;
 use intersection::Intersection;
 use matrix::Matrix4;
 use point::Point;
@@ -22,11 +22,7 @@ impl Ray {
     // fn show_item<T: fmt::Display>(item: T) {
     //     println!("Item: {}", item);
     // }
-    pub fn intersect<T: Intersectable>(
-        &self,
-        shape: Arc<Shape>,
-        intersectable: T,
-    ) -> Vec<Intersection> {
+    pub fn intersect(&self, shape: Arc<Shape>, intersectable: Intersectable) -> Vec<Intersection> {
         ray_count.with(|count_cell| {
             let plus = *count_cell.borrow() + 1;
             count_cell.replace(plus);
@@ -41,7 +37,7 @@ impl Ray {
     pub fn intersect_world(&self, world: &World) -> Vec<Intersection> {
         let mut intersections: Vec<Intersection> = Vec::new();
         for object in &world.objects {
-            intersections.extend(self.intersect(object.clone(), Sphere {}));
+            intersections.extend(self.intersect(object.clone(), Intersectable::sphere()));
         }
         let mut positive_intersections: Vec<Intersection> = Vec::new();
         for intersection in intersections {

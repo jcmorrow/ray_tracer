@@ -56,11 +56,11 @@ fn main() -> std::io::Result<()> {
     Arc::get_mut(&mut sphere3).unwrap().transform = Matrix4::translation(-1.4, 0.25, 7.0)
         .multiply(&Matrix4::scaling(0.3, 0.3, 0.3))
         .multiply(&Matrix4::rotation_y(-PI / 2.));
-    // let mut floor = Shape::plane();
+    let mut floor = Shape::plane();
     // let mut wall = Shape::plane();
     // Arc::get_mut(&mut wall).unwrap().transform =
     //     Matrix4::translation(0., 0., 3.).multiply(&Matrix4::rotation_x(PI / 2.));
-    // // floor.transform = Matrix4::translation(0., -2., 0.);
+    Arc::get_mut(&mut floor).unwrap().transform = Matrix4::translation(0., 0.25, 0.);
 
     let mut king_material = Material::new();
     king_material.reflective = 0.0;
@@ -90,9 +90,9 @@ fn main() -> std::io::Result<()> {
     world.objects.push(sphere);
     world.objects.push(sphere2);
     world.objects.push(sphere3);
-    // world.objects.push(floor);
+    world.objects.push(floor);
 
-    let mut camera = Camera::new(4000, 4000, PI / 8.);
+    let mut camera = Camera::new(100, 100, PI / 8.);
     let from = point(0., 0.5, -2.);
     let to = point(0., 0.25, 0.5);
     let up = point(0., 1., 0.);

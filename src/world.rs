@@ -1,5 +1,5 @@
 use color::Color;
-use intersectable::Sphere;
+use intersectable::Intersectable;
 use intersection::Intersection;
 use intersection::Precompute;
 use material::Material;
@@ -23,7 +23,7 @@ impl World {
         return World {
             objects: vec![
                 Arc::new(Shape {
-                    intersectable: Sphere {},
+                    intersectable: Intersectable::sphere(),
                     material: Material {
                         ambient: 0.1,
                         diffuse: 0.7,
@@ -36,7 +36,7 @@ impl World {
                     transform: IDENTITY_MATRIX,
                 }),
                 Arc::new(Shape {
-                    intersectable: Sphere {},
+                    intersectable: Intersectable::sphere(),
                     material: Material::new(),
                     parent: None,
                     transform: Matrix4::scaling(0.5, 0.5, 0.5),

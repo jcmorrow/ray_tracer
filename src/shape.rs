@@ -1,5 +1,4 @@
 use bounds::Bounds;
-use intersectable::Sphere;
 use intersectable::*;
 use material::Material;
 use matrix::Matrix4;
@@ -12,7 +11,7 @@ pub struct Shape {
     pub parent: Option<Arc<Shape>>,
     pub transform: Matrix4,
     pub material: Material,
-    pub intersectable: Sphere,
+    pub intersectable: Intersectable,
 }
 
 impl Shape {
@@ -21,18 +20,18 @@ impl Shape {
             parent: None,
             transform: IDENTITY_MATRIX,
             material: Material::new(),
-            intersectable: Sphere {},
+            intersectable: Intersectable::sphere(),
         })
     }
 
-    // pub fn plane() -> Arc<Shape> {
-    //     Arc::new(Shape {
-    //         parent: None,
-    //         transform: IDENTITY_MATRIX,
-    //         material: Material::new(),
-    //         intersectable: Arc::new(Plane {}),
-    //     })
-    // }
+    pub fn plane() -> Arc<Shape> {
+        Arc::new(Shape {
+            parent: None,
+            transform: IDENTITY_MATRIX,
+            material: Material::new(),
+            intersectable: Intersectable::plane(),
+        })
+    }
 
     // pub fn cube() -> Arc<Shape> {
     //     Arc::new(Shape {
