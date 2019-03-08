@@ -4,7 +4,7 @@ use std::vec::Vec;
 pub struct Canvas {
     pub height: i64,
     pub width: i64,
-    pixels: Vec<Color>,
+    pub pixels: Vec<Color>,
 }
 
 impl Canvas {
