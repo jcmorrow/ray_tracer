@@ -19,7 +19,7 @@ impl Dof {
         let mut i = 0;
         while i < self.takes {
             self.camera.transform = TransformationMatrix::new(
-                &Matrix4::translation(0.001 * i as f64, 0.001 * i as f64, 0.)
+                &Matrix4::translation(0.0005 * i as f64, 0.0005 * i as f64, 0.)
                     .multiply_point(&self.from),
                 &self.to,
                 &self.up,

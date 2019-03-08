@@ -48,13 +48,16 @@ fn main() -> std::io::Result<()> {
     let mut sphere = Shape::sphere();
     sphere.transform =
         Matrix4::translation(0., 0.25, 0.5).multiply(&Matrix4::scaling(0.3, 0.3, 0.3));
+    // .multiply(&Matrix4::rotation_z(PI / 4.));
     let mut sphere2 = Shape::sphere();
-    sphere2.transform =
-        Matrix4::translation(1.25, 0.25, 7.0).multiply(&Matrix4::scaling(0.3, 0.3, 0.3));
+    sphere2.transform = Matrix4::translation(1.25, 0.25, 7.0)
+        .multiply(&Matrix4::scaling(0.3, 0.3, 0.3))
+        .multiply(&Matrix4::rotation_y(PI / 2.));
 
     let mut sphere3 = Shape::sphere();
-    sphere3.transform =
-        Matrix4::translation(-1.4, 0.25, 7.0).multiply(&Matrix4::scaling(0.3, 0.3, 0.3));
+    sphere3.transform = Matrix4::translation(-1.4, 0.25, 7.0)
+        .multiply(&Matrix4::scaling(0.3, 0.3, 0.3))
+        .multiply(&Matrix4::rotation_y(-PI / 2.));
     let mut floor = Shape::plane();
     let mut wall = Shape::plane();
     wall.transform = Matrix4::translation(0., 0., 3.).multiply(&Matrix4::rotation_x(PI / 2.));
@@ -65,7 +68,7 @@ fn main() -> std::io::Result<()> {
     king_material.pattern = Box::new(Solid::new(Color::white()));
 
     let mut sphere_material = Material::new();
-    sphere_material.reflective = 0.1;
+    sphere_material.reflective = 0.4;
     let mut floor_material = Material::new();
     floor_material.reflective = 0.0;
 
@@ -88,15 +91,14 @@ fn main() -> std::io::Result<()> {
     world.objects.push(sphere3);
     world.objects.push(floor);
 
-    let mut camera = Camera::new(1400, 1400, PI / 8.);
+    let mut camera = Camera::new(2000, 2000, PI / 8.);
     let mut from = point(0., 0.5, -2.);
     let to = point(0., 0.25, 0.5);
     let up = point(0., 1., 0.);
     camera.transform = TransformationMatrix::new(&from, &to, &up);
 
     let now = Local::now();
-    // let filename = format!("output/{}.ppm", now.format("%Y-%m-%d_%H-%M-%S"));
-    let filename = "output/test.ppm";
+    let filename = format!("output/{}.ppm", now.format("%Y-%m-%d_%H-%M-%S"));
     let mut file = File::create(filename)?;
 
     let mut dof = Dof {
