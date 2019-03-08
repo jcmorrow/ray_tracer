@@ -1,60 +1,145 @@
 use bounds::Bounds;
 use intersection::Intersection;
-use point::bounds;
-use point::point;
-use point::vector;
-use point::Point;
+use point::{bounds, point, vector, Point};
 use ray::Ray;
 use shape::Shape;
-use std::cell::RefCell;
 use std::f64::INFINITY;
-use std::fmt::Debug;
-use std::rc::Rc;
 use std::sync::Arc;
 use utilities::EPSILON;
 use utilities::{max, min};
 
-pub trait Intersectable: Debug + IntersectableClone {
-    fn local_normal_at(&self, point: &Point) -> Point;
-    fn add(&mut self, shape: Arc<Shape>);
-    fn local_intersect(&self, ray: &Ray, object: Arc<Shape>) -> Vec<Intersection>;
-    fn bounds(&self, shape: &Shape) -> Bounds;
+#[derive(Debug, Clone)]
+pub enum IntersectableType {
+    Cube,
+    Group,
+    Plane,
+    Sphere,
+    Triangle,
 }
 
-pub trait IntersectableClone {
-    fn clone_box(&self) -> Box<Intersectable>;
+#[derive(Debug, Clone)]
+pub struct Intersectable {
+    intersectable_type: IntersectableType,
+    pub e1: Point,
+    pub e2: Point,
+    pub normal: Point,
+    pub p1: Point,
+    pub p2: Point,
+    pub p3: Point,
+    children: Vec<Arc<Shape>>,
 }
 
-impl<T> IntersectableClone for T
-where
-    T: 'static + Intersectable + Clone,
-{
-    fn clone_box(&self) -> Box<Intersectable> {
-        Box::new(self.clone())
+impl Intersectable {
+    pub fn sphere() -> Intersectable {
+        Intersectable {
+            children: Vec::new(),
+            e1: point(0., 0., 0.),
+            e2: point(0., 0., 0.),
+            intersectable_type: IntersectableType::Sphere,
+            normal: point(0., 0., 0.),
+            p1: point(0., 0., 0.),
+            p2: point(0., 0., 0.),
+            p3: point(0., 0., 0.),
+        }
     }
-}
 
-impl Clone for Box<Intersectable> {
-    fn clone(&self) -> Box<Intersectable> {
-        self.clone_box()
+    pub fn plane() -> Intersectable {
+        Intersectable {
+            children: Vec::new(),
+            e1: point(0., 0., 0.),
+            e2: point(0., 0., 0.),
+            intersectable_type: IntersectableType::Plane,
+            normal: point(0., 0., 0.),
+            p1: point(0., 0., 0.),
+            p2: point(0., 0., 0.),
+            p3: point(0., 0., 0.),
+        }
     }
-}
 
-#[derive(Clone, Debug)]
-pub struct Sphere {}
+    pub fn cube() -> Intersectable {
+        Intersectable {
+            children: Vec::new(),
+            e1: point(0., 0., 0.),
+            e2: point(0., 0., 0.),
+            intersectable_type: IntersectableType::Cube,
+            normal: point(0., 0., 0.),
+            p1: point(0., 0., 0.),
+            p2: point(0., 0., 0.),
+            p3: point(0., 0., 0.),
+        }
+    }
 
-impl Intersectable for Sphere {
-    fn local_normal_at(&self, local_point: &Point) -> Point {
+    pub fn triangle(p1: Point, p2: Point, p3: Point) -> Intersectable {
+        let e1 = p2.sub(&p1);
+        let e2 = p3.sub(&p1);
+        Intersectable {
+            children: Vec::new(),
+            p1,
+            p2,
+            p3,
+            e1,
+            e2,
+            normal: e1.cross(&e2).normalize(),
+            intersectable_type: IntersectableType::Triangle,
+        }
+    }
+
+    pub fn group() -> Intersectable {
+        Intersectable {
+            children: Vec::new(),
+            e1: point(0., 0., 0.),
+            e2: point(0., 0., 0.),
+            intersectable_type: IntersectableType::Group,
+            normal: point(0., 0., 0.),
+            p1: point(0., 0., 0.),
+            p2: point(0., 0., 0.),
+            p3: point(0., 0., 0.),
+        }
+    }
+
+    pub fn local_normal_at(&self, point: &Point) -> Point {
+        match self.intersectable_type {
+            IntersectableType::Cube => self.local_normal_at_cube(point),
+            IntersectableType::Plane => self.local_normal_at_plane(point),
+            IntersectableType::Sphere => self.local_normal_at_sphere(point),
+            _ => vector(0., 0., 0.),
+        }
+    }
+
+    pub fn add(&mut self, shape: Arc<Shape>) {
+        match self.intersectable_type {
+            IntersectableType::Group => self.add_group(shape),
+            _ => (),
+        }
+    }
+
+    pub fn local_intersect(&self, ray: &Ray, object: Arc<Shape>) -> Vec<Intersection> {
+        match self.intersectable_type {
+            IntersectableType::Cube => self.local_intersect_cube(ray, object),
+            IntersectableType::Sphere => self.local_intersect_sphere(ray, object),
+            IntersectableType::Plane => self.local_intersect_plane(ray, object),
+            _ => Vec::new(),
+        }
+    }
+
+    pub fn bounds(&self, shape: &Shape) -> Bounds {
+        match self.intersectable_type {
+            IntersectableType::Cube => self.bounds_cube(shape),
+            IntersectableType::Sphere => self.bounds_sphere(shape),
+            IntersectableType::Plane => self.bounds_plane(shape),
+            _ => Bounds::new(0., 0., 0., 0., 0., 0.),
+        }
+    }
+
+    fn local_normal_at_sphere(&self, local_point: &Point) -> Point {
         local_point.sub(&point(0., 0., 0.))
     }
 
-    fn add(&mut self, _shape: Arc<Shape>) {}
-
-    fn bounds(&self, _shape: &Shape) -> Bounds {
+    fn bounds_sphere(&self, _shape: &Shape) -> Bounds {
         Bounds::new(-1.0, 1.0, -1.0, 1.0, -1.0, 1.0)
     }
 
-    fn local_intersect(&self, ray: &Ray, object: Arc<Shape>) -> Vec<Intersection> {
+    fn local_intersect_sphere(&self, ray: &Ray, object: Arc<Shape>) -> Vec<Intersection> {
         let shape_to_ray = ray.origin.sub(&point(0., 0., 0.));
         let a = ray.direction.dot(&ray.direction);
         let b = ray.direction.dot(&shape_to_ray) * 2.0;
@@ -62,9 +147,9 @@ impl Intersectable for Sphere {
 
         let discriminant = b.powi(2) - 4.0 * a * c;
         if discriminant < 0. {
-            return Vec::new();
+            Vec::new()
         } else {
-            return Intersection::intersections(
+            Intersection::intersections(
                 Intersection {
                     t: (-b - discriminant.sqrt()) / (2.0 * a),
                     object: object.clone(),
@@ -73,26 +158,19 @@ impl Intersectable for Sphere {
                     t: (-b + discriminant.sqrt()) / (2.0 * a),
                     object: object.clone(),
                 },
-            );
+            )
         }
     }
-}
 
-#[derive(Clone, Debug)]
-pub struct Plane {}
-
-impl Intersectable for Plane {
-    fn local_normal_at(&self, _local_point: &Point) -> Point {
+    fn local_normal_at_plane(&self, _local_point: &Point) -> Point {
         point(0., 1., 0.)
     }
 
-    fn add(&mut self, _shape: Arc<Shape>) {}
-
-    fn bounds(&self, _shape: &Shape) -> Bounds {
+    fn bounds_plane(&self, _shape: &Shape) -> Bounds {
         Bounds::new(-INFINITY, INFINITY, 0.0, 0.0, -INFINITY, INFINITY)
     }
 
-    fn local_intersect(&self, ray: &Ray, object: Arc<Shape>) -> Vec<Intersection> {
+    fn local_intersect_plane(&self, ray: &Ray, object: Arc<Shape>) -> Vec<Intersection> {
         if ray.direction.y.abs() < EPSILON {
             return Vec::new();
         }
@@ -102,12 +180,7 @@ impl Intersectable for Plane {
             t: -ray.origin.y / ray.direction.y,
         }]
     }
-}
 
-#[derive(Clone, Debug)]
-pub struct Cube {}
-
-impl Cube {
     fn check_axis(&self, origin: f64, direction: f64) -> (f64, f64) {
         let tmin: f64;
         let tmax: f64;
@@ -126,10 +199,8 @@ impl Cube {
             (tmin, tmax)
         }
     }
-}
 
-impl Intersectable for Cube {
-    fn local_normal_at(&self, local_point: &Point) -> Point {
+    fn local_normal_at_cube(&self, local_point: &Point) -> Point {
         let maxc = vec![
             local_point.x.abs(),
             local_point.y.abs(),
@@ -148,13 +219,11 @@ impl Intersectable for Cube {
         }
     }
 
-    fn add(&mut self, _shape: Arc<Shape>) {}
-
-    fn bounds(&self, _shape: &Shape) -> Bounds {
+    fn bounds_cube(&self, _shape: &Shape) -> Bounds {
         Bounds::new(-1.0, 1.0, -1.0, 1.0, -1.0, 1.0)
     }
 
-    fn local_intersect(&self, ray: &Ray, object: Arc<Shape>) -> Vec<Intersection> {
+    fn local_intersect_cube(&self, ray: &Ray, object: Arc<Shape>) -> Vec<Intersection> {
         let (xmin, xmax) = self.check_axis(ray.origin.x, ray.direction.x);
         let (ymin, ymax) = self.check_axis(ray.origin.y, ray.direction.y);
         let (zmin, zmax) = self.check_axis(ray.origin.z, ray.direction.z);
@@ -180,41 +249,12 @@ impl Intersectable for Cube {
             },
         ]
     }
-}
 
-#[derive(Clone, Debug)]
-pub struct Triangle {
-    pub e1: Point,
-    pub e2: Point,
-    pub normal: Point,
-    pub p1: Point,
-    pub p2: Point,
-    pub p3: Point,
-}
-
-impl Triangle {
-    pub fn new(p1: Point, p2: Point, p3: Point) -> Triangle {
-        let e1 = p2.sub(&p1);
-        let e2 = p3.sub(&p1);
-        Triangle {
-            p1,
-            p2,
-            p3,
-            e1,
-            e2,
-            normal: e1.cross(&e2).normalize(),
-        }
-    }
-}
-
-impl Intersectable for Triangle {
-    fn local_normal_at(&self, _local_point: &Point) -> Point {
+    fn local_normal_at_triangle(&self, _local_point: &Point) -> Point {
         self.normal
     }
 
-    fn add(&mut self, _shape: Arc<Shape>) {}
-
-    fn bounds(&self, _shape: &Shape) -> Bounds {
+    fn bounds_triangle(&self, _shape: &Shape) -> Bounds {
         Bounds::new(
             min(&vec![self.p1.x, self.p2.x, self.p3.x]),
             max(&vec![self.p1.x, self.p2.x, self.p3.x]),
@@ -225,7 +265,7 @@ impl Intersectable for Triangle {
         )
     }
 
-    fn local_intersect(&self, ray: &Ray, object: Arc<Shape>) -> Vec<Intersection> {
+    fn local_intersect_triangle(&self, ray: &Ray, object: Arc<Shape>) -> Vec<Intersection> {
         let dir_cross_e2 = ray.direction.cross(&self.e2);
         let det = self.e1.dot(&dir_cross_e2);
         if det.abs() < EPSILON {
@@ -253,31 +293,8 @@ impl Intersectable for Triangle {
             t,
         }]
     }
-}
 
-#[derive(Clone, Debug)]
-pub struct Group {
-    children: Vec<Arc<Shape>>,
-}
-
-impl Group {
-    pub fn new() -> Group {
-        Group {
-            children: Vec::new(),
-        }
-    }
-}
-
-impl Intersectable for Group {
-    fn local_normal_at(&self, _local_point: &Point) -> Point {
-        vector(1., 0., 0.)
-    }
-
-    fn add(&mut self, shape: Arc<Shape>) {
-        self.children.push(shape);
-    }
-
-    fn bounds(&self, shape: &Shape) -> Bounds {
+    fn bounds_group(&self, shape: &Shape) -> Bounds {
         let mut child_bounds: Vec<Point> = Vec::new();
         for ref child in self.children.iter() {
             let bounds = child.bounds();
@@ -290,15 +307,19 @@ impl Intersectable for Group {
         bounds(vec![local_bounds.min, local_bounds.max])
     }
 
-    fn local_intersect(&self, ray: &Ray, object: Arc<Shape>) -> Vec<Intersection> {
+    fn local_intersect_group(&self, ray: &Ray, object: Arc<Shape>) -> Vec<Intersection> {
         if !object.bounds().hits(ray) {
             return Vec::new();
         }
         let mut intersects: Vec<Intersection> = Vec::new();
         for obj in &self.children {
-            intersects.extend(ray.intersect(obj.clone()));
+            intersects.extend(ray.intersect(obj.clone(), obj.intersectable.clone()));
         }
         intersects
+    }
+
+    fn add_group(&mut self, shape: Arc<Shape>) {
+        self.children.push(shape);
     }
 }
 
@@ -325,7 +346,7 @@ mod tests {
         let g = Group::new();
         let s = Shape {
             parent: None,
-            intersectable: Box::new(g),
+            intersectable: Arc::new(g),
             material: Material::new(),
             transform: IDENTITY_MATRIX,
         };

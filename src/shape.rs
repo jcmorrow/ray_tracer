@@ -3,9 +3,7 @@ use intersectable::*;
 use material::Material;
 use matrix::Matrix4;
 use matrix::IDENTITY_MATRIX;
-use point::{vector, Point};
-use std::cell::RefCell;
-use std::rc::Rc;
+use point::Point;
 use std::sync::Arc;
 
 #[derive(Debug)]
@@ -13,54 +11,54 @@ pub struct Shape {
     pub parent: Option<Arc<Shape>>,
     pub transform: Matrix4,
     pub material: Material,
-    pub intersectable: Box<Intersectable>,
+    pub intersectable: Intersectable,
 }
 
 impl Shape {
-    pub fn sphere() -> Shape {
-        Shape {
-            parent: None,
-            transform: IDENTITY_MATRIX,
-            material: Material::new(),
-            intersectable: Box::new(Sphere {}),
-        }
-    }
-
-    pub fn plane() -> Shape {
-        Shape {
-            parent: None,
-            transform: IDENTITY_MATRIX,
-            material: Material::new(),
-            intersectable: Box::new(Plane {}),
-        }
-    }
-
-    pub fn cube() -> Shape {
-        Shape {
-            parent: None,
-            transform: IDENTITY_MATRIX,
-            material: Material::new(),
-            intersectable: Box::new(Cube {}),
-        }
-    }
-
-    pub fn triangle(a: Point, b: Point, c: Point) -> Shape {
-        Shape {
-            parent: None,
-            transform: IDENTITY_MATRIX,
-            material: Material::new(),
-            intersectable: Box::new(Triangle::new(a, b, c)),
-        }
-    }
-
-    pub fn group() -> Arc<Shape> {
+    pub fn sphere() -> Arc<Shape> {
         Arc::new(Shape {
             parent: None,
             transform: IDENTITY_MATRIX,
             material: Material::new(),
-            intersectable: Box::new(Group::new()),
+            intersectable: Intersectable::sphere(),
         })
     }
+
+    pub fn plane() -> Arc<Shape> {
+        Arc::new(Shape {
+            parent: None,
+            transform: IDENTITY_MATRIX,
+            material: Material::new(),
+            intersectable: Intersectable::plane(),
+        })
+    }
+
+    // pub fn cube() -> Arc<Shape> {
+    //     Arc::new(Shape {
+    //         parent: None,
+    //         transform: IDENTITY_MATRIX,
+    //         material: Material::new(),
+    //         intersectable: Arc::new(Cube {}),
+    //     })
+    // }
+
+    // pub fn triangle(a: Point, b: Point, c: Point) -> Shape {
+    //     Shape {
+    //         parent: None,
+    //         transform: IDENTITY_MATRIX,
+    //         material: Material::new(),
+    //         intersectable: Arc::new(Triangle::new(a, b, c)),
+    //     }
+    // }
+
+    // pub fn group() -> Arc<Shape> {
+    //     Arc::new(Shape {
+    //         parent: None,
+    //         transform: IDENTITY_MATRIX,
+    //         material: Material::new(),
+    //         intersectable: Arc::new(Group::new()),
+    //     })
+    // }
 
     pub fn add_group(mut group: Arc<Shape>, mut shape: Arc<Shape>) {
         Arc::get_mut(&mut shape).unwrap().parent = Some(group.clone());
@@ -136,7 +134,7 @@ mod tests {
             parent: None,
             transform: t,
             material: Material::new(),
-            intersectable: Box::new(Sphere {}),
+            intersectable: Arc::new(Sphere {}),
         };
 
         assert_eq!(s.transform, t);
@@ -162,7 +160,7 @@ mod tests {
             parent: None,
             transform: Matrix4::translation(0., 1., 0.),
             material: Material::new(),
-            intersectable: Box::new(Sphere {}),
+            intersectable: Arc::new(Sphere {}),
         };
 
         assert!(s
@@ -171,7 +169,7 @@ mod tests {
 
         let s = Shape {
             parent: None,
-            intersectable: Box::new(Sphere {}),
+            intersectable: Arc::new(Sphere {}),
             transform: Matrix4::scaling(1., 0.5, 1.).multiply(&Matrix4::rotation_z(PI / 5.)),
             material: Material::new(),
         };

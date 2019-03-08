@@ -4,7 +4,7 @@ use matrix::IDENTITY_MATRIX;
 use point::point;
 use point::Point;
 
-#[derive(Debug, Copy, Clone)]
+#[derive(Debug, Copy)]
 pub struct Sphere {
     pub transform: Matrix4,
     pub material: Material,

@@ -1,8 +1,10 @@
 use canvas::Canvas;
+use color::Color;
 use matrix::Matrix4;
 use matrix::IDENTITY_MATRIX;
 use point::point;
 use ray::Ray;
+use rayon::prelude::*;
 use world::World;
 
 pub struct Camera {
@@ -60,12 +62,12 @@ impl Camera {
     pub fn render(&self, world: &World) -> Canvas {
         let mut canvas = Canvas::empty(self.hsize as i64, self.vsize as i64);
 
-        for x in 0..self.hsize - 1 {
-            for y in 0..self.vsize - 1 {
-                canvas.write_pixel(x, y, &world.color_at(&self.ray_for_pixel(x, y), 5));
-            }
-        }
-
+        let pixels: Vec<usize> = (0..canvas.pixels.len()).collect();
+        let ps: Vec<Color> = pixels
+            .par_iter()
+            .map(|i| world.color_at(&self.ray_for_pixel(i % self.hsize, i / self.hsize), 5))
+            .collect();
+        canvas.pixels = ps;
         canvas
     }
 }
