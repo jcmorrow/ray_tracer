@@ -2,6 +2,7 @@ use point::{point, Point};
 use shape::Shape;
 use std::cell::RefCell;
 use std::rc::Rc;
+use std::sync::Arc;
 
 #[derive(Debug, PartialEq, Clone)]
 pub enum ObjNodeType {
@@ -22,7 +23,7 @@ pub struct ObjNode {
 
 #[derive(Debug)]
 pub struct ObjParser {
-    pub group: Rc<RefCell<Shape>>,
+    pub group: Arc<Shape>,
     vertices: Vec<Point>,
 }
 
@@ -169,11 +170,11 @@ impl ObjParser {
         let output = ObjLineParser { line }.run(&self.vertices);
         self.vertices.extend(output.0);
         for shape in output.1 {
-            Shape::add_shape(self.group.clone(), shape);
+            Shape::add_shape(self.group.clone(), Arc::new(shape));
         }
     }
 
-    pub fn parse(text: &str) -> Shape {
+    pub fn parse(text: &str) -> Arc<Shape> {
         let mut parsed_lines: Vec<Vec<ObjNode>> = Vec::new();
         let mut obj_parser = ObjParser {
             vertices: Vec::new(),
@@ -248,8 +249,7 @@ impl ObjParser {
         for line in parsed_lines {
             obj_parser.parse_line(line);
         }
-        let group = obj_parser.group.replace(Shape::cube());
-        group
+        obj_parser.group.clone()
     }
 }
 

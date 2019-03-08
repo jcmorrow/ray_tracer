@@ -3,6 +3,7 @@ use matrix::Matrix4;
 use point::Point;
 use shape::Shape;
 use std::cell::RefCell;
+use std::sync::Arc;
 use world::World;
 
 thread_local!(static ray_count: RefCell<i64> = RefCell::new(0));
@@ -17,7 +18,7 @@ impl Ray {
         self.origin.add(&self.direction.multiply_scalar(t))
     }
 
-    pub fn intersect(&self, shape: &Shape) -> Vec<Intersection> {
+    pub fn intersect(&self, shape: Arc<Shape>) -> Vec<Intersection> {
         ray_count.with(|count_cell| {
             let plus = *count_cell.borrow() + 1;
             count_cell.replace(plus);
@@ -26,13 +27,13 @@ impl Ray {
             }
         });
         let ray = self.transform(shape.transform.inverse());
-        shape.intersectable.local_intersect(&ray, shape)
+        shape.intersectable.local_intersect(&ray, shape.clone())
     }
 
     pub fn intersect_world(&self, world: &World) -> Vec<Intersection> {
         let mut intersections: Vec<Intersection> = Vec::new();
         for object in &world.objects {
-            intersections.extend(self.intersect(object));
+            intersections.extend(self.intersect(object.clone()));
         }
         let mut positive_intersections: Vec<Intersection> = Vec::new();
         for intersection in intersections {

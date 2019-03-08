@@ -6,10 +6,11 @@ use matrix::IDENTITY_MATRIX;
 use point::{vector, Point};
 use std::cell::RefCell;
 use std::rc::Rc;
+use std::sync::Arc;
 
-#[derive(Debug, Clone)]
+#[derive(Debug)]
 pub struct Shape {
-    pub parent: Option<Rc<RefCell<Shape>>>,
+    pub parent: Option<Arc<Shape>>,
     pub transform: Matrix4,
     pub material: Material,
     pub intersectable: Box<Intersectable>,
@@ -52,26 +53,26 @@ impl Shape {
         }
     }
 
-    pub fn group() -> Rc<RefCell<Shape>> {
-        Rc::new(RefCell::new(Shape {
+    pub fn group() -> Arc<Shape> {
+        Arc::new(Shape {
             parent: None,
             transform: IDENTITY_MATRIX,
             material: Material::new(),
             intersectable: Box::new(Group::new()),
-        }))
+        })
     }
 
-    pub fn add_group(group: Rc<RefCell<Shape>>, shape: Rc<RefCell<Shape>>) {
-        shape.borrow_mut().parent = Some(group.clone());
-        group.borrow_mut().intersectable.add(shape.clone());
-    }
-
-    pub fn add_shape(group: Rc<RefCell<Shape>>, mut shape: Shape) {
-        shape.parent = Some(group.clone());
-        group
-            .borrow_mut()
+    pub fn add_group(mut group: Arc<Shape>, mut shape: Arc<Shape>) {
+        Arc::get_mut(&mut shape).unwrap().parent = Some(group.clone());
+        Arc::get_mut(&mut group)
+            .unwrap()
             .intersectable
-            .add(Rc::new(RefCell::new(shape)));
+            .add(shape.clone());
+    }
+
+    pub fn add_shape(mut group: Arc<Shape>, mut shape: Arc<Shape>) {
+        Arc::get_mut(&mut shape).unwrap().parent = Some(group.clone());
+        Arc::get_mut(&mut group).unwrap().intersectable.add(shape);
     }
 
     pub fn normal_at(&self, world_point: &Point) -> Point {
@@ -82,7 +83,7 @@ impl Shape {
 
     pub fn world_to_object(&self, world_point: &Point) -> Point {
         let point = match self.parent {
-            Some(ref p) => p.borrow().world_to_object(world_point),
+            Some(ref p) => p.world_to_object(world_point),
             None => *world_point,
         };
         self.transform.inverse().multiply_point(&point)
@@ -92,7 +93,7 @@ impl Shape {
         let mut local_normal = self.transform.inverse().transpose().multiply_point(&normal);
         local_normal.w = 0.;
         if let Some(ref p) = self.parent {
-            p.borrow().normal_to_world(&local_normal).normalize()
+            p.normal_to_world(&local_normal).normalize()
         } else {
             local_normal.normalize()
         }

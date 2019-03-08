@@ -1,11 +1,12 @@
 use point::Point;
 use ray::Ray;
 use shape::Shape;
+use std::sync::Arc;
 use utilities::EPSILON;
 
 #[derive(Clone, Debug, PartialEq)]
 pub struct Intersection {
-    pub object: Shape,
+    pub object: Arc<Shape>,
     pub t: f64,
 }
 
@@ -14,7 +15,7 @@ pub struct Precompute {
     pub eyev: Point,
     pub inside: bool,
     pub normalv: Point,
-    pub object: Shape,
+    pub object: Arc<Shape>,
     pub over_point: Point,
     pub point: Point,
     pub reflectv: Point,

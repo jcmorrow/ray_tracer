@@ -10,13 +10,14 @@ use std::cell::RefCell;
 use std::f64::INFINITY;
 use std::fmt::Debug;
 use std::rc::Rc;
+use std::sync::Arc;
 use utilities::EPSILON;
 use utilities::{max, min};
 
 pub trait Intersectable: Debug + IntersectableClone {
     fn local_normal_at(&self, point: &Point) -> Point;
-    fn add(&mut self, shape: Rc<RefCell<Shape>>);
-    fn local_intersect(&self, ray: &Ray, object: &Shape) -> Vec<Intersection>;
+    fn add(&mut self, shape: Arc<Shape>);
+    fn local_intersect(&self, ray: &Ray, object: Arc<Shape>) -> Vec<Intersection>;
     fn bounds(&self, shape: &Shape) -> Bounds;
 }
 
@@ -47,13 +48,13 @@ impl Intersectable for Sphere {
         local_point.sub(&point(0., 0., 0.))
     }
 
-    fn add(&mut self, _shape: Rc<RefCell<Shape>>) {}
+    fn add(&mut self, _shape: Arc<Shape>) {}
 
     fn bounds(&self, _shape: &Shape) -> Bounds {
         Bounds::new(-1.0, 1.0, -1.0, 1.0, -1.0, 1.0)
     }
 
-    fn local_intersect(&self, ray: &Ray, object: &Shape) -> Vec<Intersection> {
+    fn local_intersect(&self, ray: &Ray, object: Arc<Shape>) -> Vec<Intersection> {
         let shape_to_ray = ray.origin.sub(&point(0., 0., 0.));
         let a = ray.direction.dot(&ray.direction);
         let b = ray.direction.dot(&shape_to_ray) * 2.0;
@@ -85,13 +86,13 @@ impl Intersectable for Plane {
         point(0., 1., 0.)
     }
 
-    fn add(&mut self, _shape: Rc<RefCell<Shape>>) {}
+    fn add(&mut self, _shape: Arc<Shape>) {}
 
     fn bounds(&self, _shape: &Shape) -> Bounds {
         Bounds::new(-INFINITY, INFINITY, 0.0, 0.0, -INFINITY, INFINITY)
     }
 
-    fn local_intersect(&self, ray: &Ray, object: &Shape) -> Vec<Intersection> {
+    fn local_intersect(&self, ray: &Ray, object: Arc<Shape>) -> Vec<Intersection> {
         if ray.direction.y.abs() < EPSILON {
             return Vec::new();
         }
@@ -147,13 +148,13 @@ impl Intersectable for Cube {
         }
     }
 
-    fn add(&mut self, _shape: Rc<RefCell<Shape>>) {}
+    fn add(&mut self, _shape: Arc<Shape>) {}
 
     fn bounds(&self, _shape: &Shape) -> Bounds {
         Bounds::new(-1.0, 1.0, -1.0, 1.0, -1.0, 1.0)
     }
 
-    fn local_intersect(&self, ray: &Ray, object: &Shape) -> Vec<Intersection> {
+    fn local_intersect(&self, ray: &Ray, object: Arc<Shape>) -> Vec<Intersection> {
         let (xmin, xmax) = self.check_axis(ray.origin.x, ray.direction.x);
         let (ymin, ymax) = self.check_axis(ray.origin.y, ray.direction.y);
         let (zmin, zmax) = self.check_axis(ray.origin.z, ray.direction.z);
@@ -211,7 +212,7 @@ impl Intersectable for Triangle {
         self.normal
     }
 
-    fn add(&mut self, _shape: Rc<RefCell<Shape>>) {}
+    fn add(&mut self, _shape: Arc<Shape>) {}
 
     fn bounds(&self, _shape: &Shape) -> Bounds {
         Bounds::new(
@@ -224,7 +225,7 @@ impl Intersectable for Triangle {
         )
     }
 
-    fn local_intersect(&self, ray: &Ray, object: &Shape) -> Vec<Intersection> {
+    fn local_intersect(&self, ray: &Ray, object: Arc<Shape>) -> Vec<Intersection> {
         let dir_cross_e2 = ray.direction.cross(&self.e2);
         let det = self.e1.dot(&dir_cross_e2);
         if det.abs() < EPSILON {
@@ -256,7 +257,7 @@ impl Intersectable for Triangle {
 
 #[derive(Clone, Debug)]
 pub struct Group {
-    children: Vec<Rc<RefCell<Shape>>>,
+    children: Vec<Arc<Shape>>,
 }
 
 impl Group {
@@ -272,16 +273,16 @@ impl Intersectable for Group {
         vector(1., 0., 0.)
     }
 
-    fn add(&mut self, shape: Rc<RefCell<Shape>>) {
+    fn add(&mut self, shape: Arc<Shape>) {
         self.children.push(shape);
     }
 
     fn bounds(&self, shape: &Shape) -> Bounds {
         let mut child_bounds: Vec<Point> = Vec::new();
         for ref child in self.children.iter() {
-            let bounds = child.borrow().bounds();
-            child_bounds.push(child.borrow().transform.multiply_point(&bounds.min));
-            child_bounds.push(child.borrow().transform.multiply_point(&bounds.max));
+            let bounds = child.bounds();
+            child_bounds.push(child.transform.multiply_point(&bounds.min));
+            child_bounds.push(child.transform.multiply_point(&bounds.max));
         }
         let mut local_bounds: Bounds = bounds(child_bounds);
         local_bounds.min = shape.transform.inverse().multiply_point(&local_bounds.min);
@@ -289,13 +290,13 @@ impl Intersectable for Group {
         bounds(vec![local_bounds.min, local_bounds.max])
     }
 
-    fn local_intersect(&self, ray: &Ray, object: &Shape) -> Vec<Intersection> {
+    fn local_intersect(&self, ray: &Ray, object: Arc<Shape>) -> Vec<Intersection> {
         if !object.bounds().hits(ray) {
             return Vec::new();
         }
         let mut intersects: Vec<Intersection> = Vec::new();
         for obj in &self.children {
-            intersects.extend(ray.intersect(&obj.borrow()));
+            intersects.extend(ray.intersect(obj.clone()));
         }
         intersects
     }

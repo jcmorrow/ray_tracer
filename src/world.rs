@@ -11,9 +11,10 @@ use point::Point;
 use point_light::PointLight;
 use ray::Ray;
 use shape::Shape;
+use std::sync::Arc;
 
 pub struct World {
-    pub objects: Vec<Shape>,
+    pub objects: Vec<Arc<Shape>>,
     pub light_source: PointLight,
 }
 
@@ -21,7 +22,7 @@ impl World {
     pub fn new() -> World {
         return World {
             objects: vec![
-                Shape {
+                Arc::new(Shape {
                     intersectable: Box::new(Sphere {}),
                     material: Material {
                         ambient: 0.1,
@@ -33,13 +34,13 @@ impl World {
                     },
                     parent: None,
                     transform: IDENTITY_MATRIX,
-                },
-                Shape {
+                }),
+                Arc::new(Shape {
                     intersectable: Box::new(Sphere {}),
                     material: Material::new(),
                     parent: None,
                     transform: Matrix4::scaling(0.5, 0.5, 0.5),
-                },
+                }),
             ],
             light_source: PointLight {
                 intensity: Color::new(1.0, 1.0, 1.0),
