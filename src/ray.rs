@@ -1,3 +1,5 @@
+use intersectable::Intersectable;
+use intersectable::Sphere;
 use intersection::Intersection;
 use matrix::Matrix4;
 use point::Point;
@@ -17,8 +19,14 @@ impl Ray {
     pub fn position(&self, t: f64) -> Point {
         self.origin.add(&self.direction.multiply_scalar(t))
     }
-
-    pub fn intersect(&self, shape: Arc<Shape>) -> Vec<Intersection> {
+    // fn show_item<T: fmt::Display>(item: T) {
+    //     println!("Item: {}", item);
+    // }
+    pub fn intersect<T: Intersectable>(
+        &self,
+        shape: Arc<Shape>,
+        intersectable: T,
+    ) -> Vec<Intersection> {
         ray_count.with(|count_cell| {
             let plus = *count_cell.borrow() + 1;
             count_cell.replace(plus);
@@ -27,13 +35,13 @@ impl Ray {
             }
         });
         let ray = self.transform(shape.transform.inverse());
-        shape.intersectable.local_intersect(&ray, shape.clone())
+        intersectable.local_intersect(&ray, shape.clone())
     }
 
     pub fn intersect_world(&self, world: &World) -> Vec<Intersection> {
         let mut intersections: Vec<Intersection> = Vec::new();
         for object in &world.objects {
-            intersections.extend(self.intersect(object.clone()));
+            intersections.extend(self.intersect(object.clone(), Sphere {}));
         }
         let mut positive_intersections: Vec<Intersection> = Vec::new();
         for intersection in intersections {
@@ -192,7 +200,7 @@ mod tests {
             parent: None,
             transform: Matrix4::scaling(2.0, 2.0, 2.0),
             material: Material::new(),
-            intersectable: Box::new(Sphere {}),
+            intersectable: Arc::new(Sphere {}),
         };
 
         let xs = r.intersect(&s);
@@ -210,7 +218,7 @@ mod tests {
         };
         let s = Shape {
             parent: None,
-            intersectable: Box::new(Sphere {}),
+            intersectable: Arc::new(Sphere {}),
             transform: Matrix4::translation(5.0, 0.0, 0.0),
             material: Material::new(),
         };

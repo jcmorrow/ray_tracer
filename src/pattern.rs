@@ -6,33 +6,15 @@ use point::point;
 use point::Point;
 use shape::Shape;
 use std::fmt::Debug;
+use std::sync::Arc;
 use utilities::equal;
 
-pub trait Patternable: Debug + PatternableClone {
+pub trait Patternable: Debug {
     fn color_at(&self, point: &Point) -> Color;
     fn color_at_object(&self, object: &Shape, point: &Point) -> Color;
 }
 
-pub trait PatternableClone {
-    fn clone_box(&self) -> (Box<Patternable>);
-}
-
-impl Clone for Box<Patternable> {
-    fn clone(&self) -> Box<Patternable> {
-        self.clone_box()
-    }
-}
-
-impl<T> PatternableClone for T
-where
-    T: 'static + Patternable + Clone,
-{
-    fn clone_box(&self) -> Box<Patternable> {
-        Box::new(self.clone())
-    }
-}
-
-#[derive(Clone, Debug)]
+#[derive(Debug)]
 pub struct Stripe {
     a: Color,
     b: Color,
@@ -65,7 +47,7 @@ impl Patternable for Stripe {
     }
 }
 
-#[derive(Clone, Debug)]
+#[derive(Debug)]
 pub struct Solid {
     color: Color,
 }
@@ -86,7 +68,7 @@ impl Patternable for Solid {
     }
 }
 
-#[derive(Clone, Debug)]
+#[derive(Debug)]
 pub struct Gradient {
     a: Color,
     b: Color,
@@ -117,7 +99,7 @@ impl Patternable for Gradient {
     }
 }
 
-#[derive(Clone, Debug)]
+#[derive(Debug)]
 pub struct Ring {
     a: Color,
     b: Color,
@@ -150,7 +132,7 @@ impl Patternable for Ring {
     }
 }
 
-#[derive(Clone, Debug)]
+#[derive(Debug)]
 pub struct Checker {
     a: Color,
     b: Color,
@@ -184,15 +166,15 @@ impl Patternable for Checker {
     }
 }
 
-#[derive(Clone, Debug)]
+#[derive(Debug)]
 pub struct Blended {
-    a: Box<Patternable>,
-    b: Box<Patternable>,
+    a: Arc<Patternable>,
+    b: Arc<Patternable>,
     pub transform: Matrix4,
 }
 
 impl Blended {
-    pub fn new(a: Box<Patternable>, b: Box<Patternable>) -> Blended {
+    pub fn new(a: Arc<Patternable>, b: Arc<Patternable>) -> Blended {
         Blended {
             a,
             b,
@@ -216,16 +198,16 @@ impl Patternable for Blended {
     }
 }
 
-#[derive(Clone, Debug)]
+#[derive(Debug)]
 pub struct Perlin {
-    pattern: Box<Patternable>,
+    pattern: Arc<Patternable>,
     perlin: PerlinNoise,
     pub factor: f64,
     pub transform: Matrix4,
 }
 
 impl Perlin {
-    pub fn new(pattern: Box<Patternable>) -> Perlin {
+    pub fn new(pattern: Arc<Patternable>) -> Perlin {
         Perlin {
             pattern,
             transform: IDENTITY_MATRIX,

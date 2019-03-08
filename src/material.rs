@@ -4,13 +4,14 @@ use pattern::Solid;
 use point::Point;
 use point_light::PointLight;
 use shape::Shape;
+use std::sync::Arc;
 use utilities::equal;
 
-#[derive(Debug, Clone)]
+#[derive(Debug)]
 pub struct Material {
     pub ambient: f64,
     pub diffuse: f64,
-    pub pattern: Box<Patternable>,
+    pub pattern: Solid,
     pub reflective: f64,
     pub shininess: f64,
     pub specular: f64,
@@ -18,14 +19,14 @@ pub struct Material {
 
 impl Material {
     pub fn new() -> Material {
-        return Material {
+        Material {
             ambient: 0.1,
             diffuse: 0.9,
             shininess: 200.0,
             specular: 0.9,
-            pattern: Box::new(Solid::new(Color::white())),
+            pattern: Solid::new(Color::white()),
             reflective: 0.0,
-        };
+        }
     }
 
     pub fn equal(&self, other: &Material) -> bool {
@@ -198,7 +199,7 @@ mod tests {
     fn test_lighting_with_pattern() {
         let object = Shape::sphere();
         let mut m = Material::new();
-        m.pattern = Box::new(Stripe::new(Color::black(), Color::white()));
+        m.pattern = Arc::new(Stripe::new(Color::black(), Color::white()));
         m.ambient = 1.0;
         m.diffuse = 0.0;
         m.specular = 0.0;

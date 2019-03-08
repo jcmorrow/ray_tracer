@@ -23,20 +23,20 @@ impl World {
         return World {
             objects: vec![
                 Arc::new(Shape {
-                    intersectable: Box::new(Sphere {}),
+                    intersectable: Sphere {},
                     material: Material {
                         ambient: 0.1,
                         diffuse: 0.7,
                         shininess: 200.0,
                         specular: 0.2,
-                        pattern: Box::new(Solid::new(Color::new(0.8, 1.0, 0.6))),
+                        pattern: Solid::new(Color::new(0.8, 1.0, 0.6)),
                         reflective: 0.0,
                     },
                     parent: None,
                     transform: IDENTITY_MATRIX,
                 }),
                 Arc::new(Shape {
-                    intersectable: Box::new(Sphere {}),
+                    intersectable: Sphere {},
                     material: Material::new(),
                     parent: None,
                     transform: Matrix4::scaling(0.5, 0.5, 0.5),

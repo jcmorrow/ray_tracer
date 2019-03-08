@@ -6,41 +6,20 @@ use point::vector;
 use point::Point;
 use ray::Ray;
 use shape::Shape;
-use std::cell::RefCell;
 use std::f64::INFINITY;
 use std::fmt::Debug;
-use std::rc::Rc;
 use std::sync::Arc;
 use utilities::EPSILON;
 use utilities::{max, min};
 
-pub trait Intersectable: Debug + IntersectableClone {
+pub trait Intersectable: Debug {
     fn local_normal_at(&self, point: &Point) -> Point;
     fn add(&mut self, shape: Arc<Shape>);
     fn local_intersect(&self, ray: &Ray, object: Arc<Shape>) -> Vec<Intersection>;
     fn bounds(&self, shape: &Shape) -> Bounds;
 }
 
-pub trait IntersectableClone {
-    fn clone_box(&self) -> Box<Intersectable>;
-}
-
-impl<T> IntersectableClone for T
-where
-    T: 'static + Intersectable + Clone,
-{
-    fn clone_box(&self) -> Box<Intersectable> {
-        Box::new(self.clone())
-    }
-}
-
-impl Clone for Box<Intersectable> {
-    fn clone(&self) -> Box<Intersectable> {
-        self.clone_box()
-    }
-}
-
-#[derive(Clone, Debug)]
+#[derive(Debug)]
 pub struct Sphere {}
 
 impl Intersectable for Sphere {
@@ -78,7 +57,7 @@ impl Intersectable for Sphere {
     }
 }
 
-#[derive(Clone, Debug)]
+#[derive(Debug)]
 pub struct Plane {}
 
 impl Intersectable for Plane {
@@ -104,7 +83,7 @@ impl Intersectable for Plane {
     }
 }
 
-#[derive(Clone, Debug)]
+#[derive(Debug)]
 pub struct Cube {}
 
 impl Cube {
@@ -182,7 +161,7 @@ impl Intersectable for Cube {
     }
 }
 
-#[derive(Clone, Debug)]
+#[derive(Debug)]
 pub struct Triangle {
     pub e1: Point,
     pub e2: Point,
@@ -255,7 +234,7 @@ impl Intersectable for Triangle {
     }
 }
 
-#[derive(Clone, Debug)]
+#[derive(Debug)]
 pub struct Group {
     children: Vec<Arc<Shape>>,
 }
@@ -296,7 +275,7 @@ impl Intersectable for Group {
         }
         let mut intersects: Vec<Intersection> = Vec::new();
         for obj in &self.children {
-            intersects.extend(ray.intersect(obj.clone()));
+            intersects.extend(ray.intersect(obj.clone(), Sphere {}));
         }
         intersects
     }
@@ -325,7 +304,7 @@ mod tests {
         let g = Group::new();
         let s = Shape {
             parent: None,
-            intersectable: Box::new(g),
+            intersectable: Arc::new(g),
             material: Material::new(),
             transform: IDENTITY_MATRIX,
         };

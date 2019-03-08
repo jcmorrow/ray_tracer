@@ -1,7 +1,5 @@
 use point::{point, Point};
 use shape::Shape;
-use std::cell::RefCell;
-use std::rc::Rc;
 use std::sync::Arc;
 
 #[derive(Debug, PartialEq, Clone)]
