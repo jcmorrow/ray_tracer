@@ -80,7 +80,7 @@ fn main() -> std::io::Result<()> {
     world.objects.push(sphere3);
     world.objects.push(floor);
 
-    let mut camera = Camera::new(1000, 1000, PI / 8.);
+    let mut camera = Camera::new(4000, 4000, PI / 8.);
     let from = point(0., 0.9, -2.);
     let to = point(0., 0.25, 0.5);
     let up = point(0., 1., 0.);
@@ -94,7 +94,7 @@ fn main() -> std::io::Result<()> {
         camera,
         canvases: Vec::new(),
         from,
-        takes: 8,
+        takes: 16,
         to,
         up,
     };
