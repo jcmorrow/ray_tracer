@@ -10,13 +10,13 @@ use std::sync::Arc;
 use utilities::EPSILON;
 use utilities::{max, min};
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub enum IntersectableType {
     Sphere,
     Plane,
 }
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct Intersectable {
     intersectable_type: IntersectableType,
 }

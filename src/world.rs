@@ -5,7 +5,7 @@ use intersection::Precompute;
 use material::Material;
 use matrix::Matrix4;
 use matrix::IDENTITY_MATRIX;
-use pattern::Solid;
+use patternable::Patternable;
 use point::point;
 use point::Point;
 use point_light::PointLight;
@@ -29,7 +29,7 @@ impl World {
                         diffuse: 0.7,
                         shininess: 200.0,
                         specular: 0.2,
-                        pattern: Solid::new(Color::new(0.8, 1.0, 0.6)),
+                        pattern: Patternable::solid(Color::new(0.8, 1.0, 0.6)),
                         reflective: 0.0,
                     },
                     parent: None,

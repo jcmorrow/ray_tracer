@@ -23,13 +23,13 @@ impl Ray {
     //     println!("Item: {}", item);
     // }
     pub fn intersect(&self, shape: Arc<Shape>, intersectable: Intersectable) -> Vec<Intersection> {
-        ray_count.with(|count_cell| {
-            let plus = *count_cell.borrow() + 1;
-            count_cell.replace(plus);
-            if *count_cell.borrow() % 10000 == 0 {
-                println!("{:?}", *count_cell.borrow());
-            }
-        });
+        // ray_count.with(|count_cell| {
+        //     let plus = *count_cell.borrow() + 1;
+        //     count_cell.replace(plus);
+        //     if *count_cell.borrow() % 10000 == 0 {
+        //         println!("{:?}", *count_cell.borrow());
+        //     }
+        // });
         let ray = self.transform(shape.transform.inverse());
         intersectable.local_intersect(&ray, shape.clone())
     }
@@ -37,7 +37,7 @@ impl Ray {
     pub fn intersect_world(&self, world: &World) -> Vec<Intersection> {
         let mut intersections: Vec<Intersection> = Vec::new();
         for object in &world.objects {
-            intersections.extend(self.intersect(object.clone(), Intersectable::sphere()));
+            intersections.extend(self.intersect(object.clone(), object.intersectable.clone()));
         }
         let mut positive_intersections: Vec<Intersection> = Vec::new();
         for intersection in intersections {

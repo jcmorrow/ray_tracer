@@ -1,17 +1,16 @@
 use color::Color;
-use pattern::Patternable;
-use pattern::Solid;
+use patternable::Patternable;
 use point::Point;
 use point_light::PointLight;
 use shape::Shape;
 use std::sync::Arc;
 use utilities::equal;
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct Material {
     pub ambient: f64,
     pub diffuse: f64,
-    pub pattern: Solid,
+    pub pattern: Patternable,
     pub reflective: f64,
     pub shininess: f64,
     pub specular: f64,
@@ -24,7 +23,7 @@ impl Material {
             diffuse: 0.9,
             shininess: 200.0,
             specular: 0.9,
-            pattern: Solid::new(Color::white()),
+            pattern: Patternable::solid(Color::white()),
             reflective: 0.0,
         }
     }
@@ -79,7 +78,7 @@ impl Material {
 mod tests {
     use color::Color;
     use material::Material;
-    use pattern::Stripe;
+    use patternable::Stripe;
     use point::point;
     use point::vector;
     use point_light::PointLight;
