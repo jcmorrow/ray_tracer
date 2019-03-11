@@ -215,7 +215,7 @@ mod tests {
 
     #[test]
     fn test_color_at_stripe() {
-        let p = Patternable::stripe(Color::black(), Color::white());
+        let p = Patternable::stripe(Color::white(), Color::black());
 
         assert_eq!(p.color_at(&point(0.0, 0.0, 0.0)), Color::white());
         assert_eq!(p.color_at(&point(0.0, 1.0, 0.0)), Color::white());
