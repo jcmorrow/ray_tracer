@@ -5,7 +5,6 @@ use noise::{NoiseFn, Perlin as PerlinNoise};
 use point::point;
 use point::Point;
 use shape::Shape;
-use std::sync::Arc;
 use utilities::equal;
 
 #[derive(Debug, Clone)]
@@ -209,15 +208,14 @@ impl Patternable {
 mod tests {
     use color::Color;
     use matrix::Matrix4;
-    use pattern::Gradient;
-    use pattern::Patternable;
-    use pattern::Stripe;
+    use patternable::Patternable;
     use point::point;
     use shape::Shape;
+    use std::sync::Arc;
 
     #[test]
     fn test_color_at_stripe() {
-        let p = Stripe::new(Color::white(), Color::black());
+        let p = Patternable::stripe(Color::white(), Color::black());
 
         assert_eq!(p.color_at(&point(0.0, 0.0, 0.0)), Color::white());
         assert_eq!(p.color_at(&point(0.0, 1.0, 0.0)), Color::white());
@@ -235,8 +233,8 @@ mod tests {
     #[test]
     fn test_color_at_object() {
         let mut sphere = Shape::sphere();
-        sphere.transform = Matrix4::translation(2.0, 2.0, 2.0);
-        let pattern = Stripe::new(Color::black(), Color::white());
+        Arc::get_mut(&mut sphere).unwrap().transform = Matrix4::translation(2.0, 2.0, 2.0);
+        let pattern = Patternable::stripe(Color::black(), Color::white());
         let color = pattern.color_at_object(&sphere, &point(1.5, 0.0, 0.0));
 
         assert_eq!(color, Color::white());
@@ -245,7 +243,7 @@ mod tests {
     #[test]
     fn test_color_at_object_with_pattern_transform() {
         let sphere = Shape::sphere();
-        let mut pattern = Stripe::new(Color::black(), Color::white());
+        let mut pattern = Patternable::stripe(Color::black(), Color::white());
         pattern.transform = Matrix4::translation(2.0, 2.0, 2.0);
         let color = pattern.color_at_object(&sphere, &point(1.5, 0.0, 0.0));
 
@@ -255,8 +253,8 @@ mod tests {
     #[test]
     fn test_color_at_object_with_both_transforms() {
         let mut sphere = Shape::sphere();
-        sphere.transform = Matrix4::translation(2.0, 2.0, 2.0);
-        let mut pattern = Stripe::new(Color::black(), Color::white());
+        Arc::get_mut(&mut sphere).unwrap().transform = Matrix4::translation(2.0, 2.0, 2.0);
+        let mut pattern = Patternable::stripe(Color::black(), Color::white());
         pattern.transform = Matrix4::translation(0.5, 0.0, 0.0);
         let color = pattern.color_at_object(&sphere, &point(2.5, 0.0, 0.0));
 
@@ -265,7 +263,7 @@ mod tests {
 
     #[test]
     fn test_color_at_gradient() {
-        let p = Gradient::new(Color::white(), Color::black());
+        let p = Patternable::gradient(Color::white(), Color::black());
 
         assert_eq!(
             p.color_at(&point(0.25, 0.0, 0.0)),

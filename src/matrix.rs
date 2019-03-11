@@ -90,11 +90,11 @@ impl Matrix4 {
             for col in 0..4 {
                 if not_col != col && not_row != row {
                     result.members[x][y] = self.members[col][row];
-                    x = x + 1;
+                    x += 1;
                 }
             }
             if row != not_row {
-                y = y + 1;
+                y += 1;
             }
         }
         result
@@ -107,16 +107,16 @@ impl Matrix4 {
     pub fn cofactor(&self, col: usize, row: usize) -> f64 {
         let minor = self.minor(col, row);
         if (col + row) % 2 == 0 {
-            return minor;
+            minor
         } else {
-            return minor * -1.;
+            minor * -1.
         }
     }
 
     pub fn determinant(&self) -> f64 {
         let mut result = 0.;
         for i in 0..4 {
-            result = result + self.members[0][i] * self.cofactor(0, i);
+            result += self.members[0][i] * self.cofactor(0, i);
         }
         result
     }
@@ -231,11 +231,11 @@ impl Matrix3 {
             for col in 0..3 {
                 if not_col != col && not_row != row {
                     result.members[x][y] = self.members[col][row];
-                    x = x + 1;
+                    x += 1;
                 }
             }
             if row != not_row {
-                y = y + 1;
+                y += 1;
             }
         }
         result
@@ -257,7 +257,7 @@ impl Matrix3 {
     pub fn determinant(&self) -> f64 {
         let mut result = 0.;
         for i in 0..3 {
-            result = result + self.members[0][i] * self.cofactor(0, i);
+            result += self.members[0][i] * self.cofactor(0, i);
         }
         result
     }

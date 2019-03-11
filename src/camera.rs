@@ -65,7 +65,7 @@ impl Camera {
         let pixels: Vec<usize> = (0..canvas.pixels.len()).collect();
         let ps: Vec<Color> = pixels
             .par_iter()
-            .map(|i| world.color_at(&self.ray_for_pixel(i % self.hsize, i / self.hsize), 5))
+            .map(|i| world.color_at(&self.ray_for_pixel(i % self.hsize, i / self.hsize), 8))
             .collect();
         canvas.pixels = ps;
         canvas

@@ -16,7 +16,10 @@ pub struct Precompute {
     pub inside: bool,
     pub normalv: Point,
     pub object: Arc<Shape>,
+    pub n1: f64,
+    pub n2: f64,
     pub over_point: Point,
+    pub under_point: Point,
     pub point: Point,
     pub reflectv: Point,
     pub t: f64,
@@ -29,36 +32,99 @@ impl Intersection {
 
     pub fn hit(hits: &mut Vec<Intersection>) -> Option<Intersection> {
         hits.retain(|x| x.t > 0.0);
-        if hits.len() > 0 {
+        if !hits.is_empty() {
             let mut hit: Intersection = hits[0].clone();
             for h in hits {
                 if h.t > 0.0 && h.t < hit.t {
                     hit = h.clone();
                 }
             }
-            return Some(hit);
+            Some(hit)
+        } else {
+            None
         }
-        return None;
     }
 
-    pub fn precompute(&self, ray: &Ray) -> Precompute {
+    pub fn precompute(&self, ray: &Ray, xs: Vec<Intersection>) -> Precompute {
         let point = ray.position(self.t);
-        let normalv = self.object.normal_at(&point);
+        let mut normalv = self.object.normal_at(&point);
+        let mut inside = false;
+        if normalv.dot(&ray.direction.multiply_scalar(-1.)) < 0. {
+            inside = true;
+            normalv = normalv.multiply_scalar(-1.);
+        }
         let mut precompute = Precompute {
             eyev: ray.direction.multiply_scalar(-1.0),
-            inside: false,
-            normalv: normalv,
+            inside,
+            n1: 1.,
+            n2: 1.,
+            normalv,
             object: self.object.clone(),
             over_point: point.add(&normalv.multiply_scalar(EPSILON)),
-            point: point,
-            t: self.t,
+            under_point: point.sub(&normalv.multiply_scalar(EPSILON)),
+            point,
             reflectv: ray.direction.reflect(&normalv),
+            t: self.t,
         };
+
+        let mut containers: Vec<Arc<Shape>> = Vec::new();
+
+        for i in xs {
+            if i == *self {
+                if !containers.is_empty() {
+                    precompute.n1 = containers.last().unwrap().material.refractive_index;
+                } else {
+                    precompute.n1 = 1.;
+                }
+            }
+            let mut included = false;
+            for s in &containers {
+                if s == &i.object {
+                    included = true;
+                }
+            }
+            if included {
+                containers = containers
+                    .iter()
+                    .cloned()
+                    .filter(|obj| obj != &i.object)
+                    .collect()
+            } else {
+                containers.push(i.object.clone());
+            }
+            if i == *self {
+                if !containers.is_empty() {
+                    precompute.n2 = containers.last().unwrap().material.refractive_index;
+                } else {
+                    precompute.n2 = 1.;
+                }
+                break;
+            }
+        }
+
         if precompute.normalv.dot(&precompute.eyev) < 0.0 {
             precompute.inside = true;
             precompute.normalv = precompute.normalv.multiply_scalar(-1.0);
         }
         precompute
+    }
+
+    pub fn schlick(precompute: &Precompute) -> f64 {
+        let mut cos = precompute.eyev.dot(&precompute.normalv);
+        if precompute.n1 > precompute.n2 {
+            let n = precompute.n1 / precompute.n2;
+            let sin2_t = n.powi(2) * (1. - cos.powi(2));
+            if sin2_t > 1. {
+                return 1.;
+            }
+
+            let cos_t = (1. - sin2_t).sqrt();
+            cos = cos_t;
+        }
+
+        let r0 = ((precompute.n1 - precompute.n2) / (precompute.n1 + precompute.n2)).powi(2);
+
+        r0 + (1. - r0) * (1. - cos).powi(5)
     }
 }
 
@@ -71,6 +137,7 @@ mod tests {
     use point::vector;
     use ray::Ray;
     use shape::Shape;
+    use std::sync::Arc;
     use utilities::equal;
     use utilities::EPSILON;
 
@@ -167,7 +234,7 @@ mod tests {
             t: 4.0,
         };
 
-        let precompute = i.precompute(&r);
+        let precompute = i.precompute(&r, Vec::new());
 
         assert_eq!(
             precompute,
@@ -175,9 +242,12 @@ mod tests {
                 eyev: vector(0.0, 0.0, -1.0),
                 reflectv: vector(0.0, 0.0, -1.0),
                 inside: false,
+                n1: 1.,
+                n2: 1.,
                 normalv: vector(0.0, 0.0, -1.0),
                 object: shape,
                 over_point: point(0.0, 0.0, -1.00001),
+                under_point: point(0.0, 0.0, -0.99999),
                 point: point(0.0, 0.0, -1.0),
                 t: i.t,
             }
@@ -196,16 +266,19 @@ mod tests {
             t: 1.0,
         };
 
-        let precompute = i.precompute(&r);
+        let precompute = i.precompute(&r, Vec::new());
 
         assert_eq!(
             precompute,
             Precompute {
                 eyev: vector(0.0, 0.0, -1.0),
                 inside: true,
+                n1: 1.,
+                n2: 1.,
                 normalv: vector(0.0, 0.0, -1.0),
                 object: shape,
-                over_point: point(0.0, 0.0, 1.00001),
+                over_point: point(0.0, 0.0, 0.99999),
+                under_point: point(0.0, 0.0, 1.00001),
                 point: point(0.0, 0.0, 1.0),
                 reflectv: vector(0.0, 0.0, -1.0),
                 t: i.t,
@@ -220,13 +293,13 @@ mod tests {
             direction: vector(0.0, 0.0, 1.0),
         };
         let mut shape = Shape::sphere();
-        shape.transform = Matrix4::translation(0.0, 0.0, 1.0);
+        Arc::get_mut(&mut shape).unwrap().transform = Matrix4::translation(0.0, 0.0, 1.0);
         let i = Intersection {
             object: shape,
             t: 5.0,
         };
 
-        let precompute = i.precompute(&r);
+        let precompute = i.precompute(&r, Vec::new());
 
         assert!(precompute.over_point.z < -EPSILON / 2.0);
         assert!(precompute.point.z > precompute.over_point.z);
@@ -245,7 +318,7 @@ mod tests {
             t: 5.0,
         };
 
-        let precompute = i.precompute(&r);
+        let precompute = i.precompute(&r, Vec::new());
 
         assert!(precompute
             .reflectv

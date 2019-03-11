@@ -46,19 +46,19 @@ impl Color {
     }
 
     pub fn multiply_scalar(&self, factor: f64) -> Color {
-        return Color {
+        Color {
             blue: self.blue * factor,
             green: self.green * factor,
             red: self.red * factor,
-        };
+        }
     }
 
     pub fn divide(&self, factor: f64) -> Color {
-        return Color {
+        Color {
             blue: self.blue / factor,
             green: self.green / factor,
             red: self.red / factor,
-        };
+        }
     }
 
     pub fn ppm(&self) -> String {

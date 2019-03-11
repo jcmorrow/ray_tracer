@@ -14,12 +14,12 @@ pub fn clamp(number: f64, min: f64, max: f64) -> f64 {
     }
 }
 
-pub fn min(xs: &Vec<f64>) -> f64 {
-    xs.iter().cloned().fold(0. / 0., f64::min)
+pub fn min(xs: &[f64]) -> f64 {
+    xs.iter().cloned().fold(std::f64::NAN, f64::min)
 }
 
-pub fn max(xs: &Vec<f64>) -> f64 {
-    xs.iter().cloned().fold(0. / 0., f64::max)
+pub fn max(xs: &[f64]) -> f64 {
+    xs.iter().cloned().fold(std::f64::NAN, f64::max)
 }
 
 #[cfg(test)]
