@@ -3,9 +3,10 @@ use intersection::Intersection;
 use point::{bounds, point, vector, Point};
 use ray::Ray;
 use shape::Shape;
+use std::f64::EPSILON;
 use std::f64::INFINITY;
 use std::sync::Arc;
-use utilities::EPSILON;
+use utilities::equal;
 use utilities::{max, min};
 
 #[derive(Debug, Clone)]
@@ -208,11 +209,11 @@ impl Intersectable {
         ]
         .iter()
         .cloned()
-        .fold(0. / 0., f64::max);
+        .fold(std::f64::NAN, f64::max);
 
-        if maxc == local_point.x.abs() {
+        if equal(maxc, local_point.x.abs()) {
             vector(local_point.x, 0., 0.)
-        } else if maxc == local_point.y.abs() {
+        } else if equal(maxc, local_point.y.abs()) {
             vector(0., local_point.y, 0.)
         } else {
             vector(0., 0., local_point.z)
@@ -256,12 +257,12 @@ impl Intersectable {
 
     fn bounds_triangle(&self, _shape: &Shape) -> Bounds {
         Bounds::new(
-            min(&vec![self.p1.x, self.p2.x, self.p3.x]),
-            max(&vec![self.p1.x, self.p2.x, self.p3.x]),
-            min(&vec![self.p1.y, self.p2.y, self.p3.y]),
-            max(&vec![self.p1.y, self.p2.y, self.p3.y]),
-            min(&vec![self.p1.z, self.p2.z, self.p3.z]),
-            max(&vec![self.p1.z, self.p2.z, self.p3.z]),
+            min(&[self.p1.x, self.p2.x, self.p3.x]),
+            max(&[self.p1.x, self.p2.x, self.p3.x]),
+            min(&[self.p1.y, self.p2.y, self.p3.y]),
+            max(&[self.p1.y, self.p2.y, self.p3.y]),
+            min(&[self.p1.z, self.p2.z, self.p3.z]),
+            max(&[self.p1.z, self.p2.z, self.p3.z]),
         )
     }
 
@@ -296,7 +297,7 @@ impl Intersectable {
 
     fn bounds_group(&self, shape: &Shape) -> Bounds {
         let mut child_bounds: Vec<Point> = Vec::new();
-        for ref child in self.children.iter() {
+        for child in (&self.children).iter() {
             let bounds = child.bounds();
             child_bounds.push(child.transform.multiply_point(&bounds.min));
             child_bounds.push(child.transform.multiply_point(&bounds.max));

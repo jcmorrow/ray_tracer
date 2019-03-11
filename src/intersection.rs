@@ -1,8 +1,8 @@
 use point::Point;
 use ray::Ray;
 use shape::Shape;
+use std::f64::EPSILON;
 use std::sync::Arc;
-use utilities::EPSILON;
 
 #[derive(Clone, Debug, PartialEq)]
 pub struct Intersection {
@@ -31,7 +31,7 @@ impl Intersection {
 
     pub fn hit(hits: &mut Vec<Intersection>) -> Option<Intersection> {
         hits.retain(|x| x.t > 0.0);
-        if hits.len() > 0 {
+        if !hits.is_empty() {
             let mut hit: Intersection = hits[0].clone();
             for h in hits {
                 if h.t > 0.0 && h.t < hit.t {
@@ -64,7 +64,7 @@ impl Intersection {
 
         for i in xs {
             if i == *self {
-                if containers.len() > 0 {
+                if !containers.is_empty() {
                     precompute.n1 = containers.last().unwrap().material.refractive_index;
                 } else {
                     precompute.n1 = 1.;
@@ -86,7 +86,7 @@ impl Intersection {
                 containers.push(i.object.clone());
             }
             if i == *self {
-                if containers.len() > 0 {
+                if !containers.is_empty() {
                     precompute.n2 = containers.last().unwrap().material.refractive_index;
                 } else {
                     precompute.n2 = 1.;

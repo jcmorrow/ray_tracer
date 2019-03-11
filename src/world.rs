@@ -68,7 +68,7 @@ impl World {
 
     pub fn color_at(&self, ray: &Ray, remaining: i32) -> Color {
         let hits = ray.intersect_world(&self);
-        if hits.len() > 0 {
+        if !hits.is_empty() {
             self.shade_hit(hits[0].precompute(&ray, Vec::new()), remaining)
         } else {
             Color::black()
