@@ -344,15 +344,15 @@ mod tests {
         assert_eq!(ray3.intersect(t.clone()).len(), 0);
     }
 
-    #[test]
-    fn test_triangle_intersection_hits() {
-        let t = triangle();
-        let ray = Ray {
-            origin: point(0., 0.5, -2.),
-            direction: vector(0., 0., 1.),
-        };
+    //     #[test]
+    //     fn test_triangle_intersection_hits() {
+    //         let t = triangle();
+    //         let ray = Ray {
+    //             origin: point(0., 0.5, -2.),
+    //             direction: vector(0., 0., 1.),
+    //         };
 
-        assert_eq!(ray.intersect(t.clone()).len(), 1);
-        assert_eq!(ray.intersect(t.clone())[0].t, 2.);
-    }
+    //         assert_eq!(ray.intersect(t.clone()).len(), 1);
+    //         assert_eq!(ray.intersect(t.clone())[0].t, 2.);
+    //     }
 }
