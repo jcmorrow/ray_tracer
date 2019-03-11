@@ -27,10 +27,12 @@ impl World {
                     material: Material {
                         ambient: 0.1,
                         diffuse: 0.7,
-                        shininess: 200.0,
-                        specular: 0.2,
                         pattern: Patternable::solid(Color::new(0.8, 1.0, 0.6)),
-                        reflective: 0.0,
+                        reflective: 0.,
+                        refractive_index: 1.,
+                        shininess: 200.,
+                        specular: 0.2,
+                        transparency: 0.,
                     },
                     parent: None,
                     transform: IDENTITY_MATRIX,
@@ -110,6 +112,7 @@ mod tests {
     use point_light::PointLight;
     use ray::Ray;
     use shape::Shape;
+    use std::sync::Arc;
     use world::World;
 
     #[test]
@@ -226,7 +229,10 @@ mod tests {
             origin: point(0.0, 0.0, 0.0),
             direction: vector(0.0, 0.0, 1.0),
         };
-        world.objects[1].material.ambient = 1.0;
+        Arc::get_mut(&mut world.objects[1])
+            .unwrap()
+            .material
+            .ambient = 1.0;
         let intersection = ray.intersect_world(&world)[0].clone();
         let comps = intersection.precompute(&ray);
         let color = world.reflected_color(&comps, 10);
@@ -236,8 +242,8 @@ mod tests {
     #[test]
     fn test_world_reflected_color_for_reflective_material() {
         let mut plane = Shape::plane();
-        plane.transform = Matrix4::translation(0.0, -1.0, 0.0);
-        plane.material.reflective = 0.5;
+        Arc::get_mut(&mut plane).unwrap().transform = Matrix4::translation(0.0, -1.0, 0.0);
+        Arc::get_mut(&mut plane).unwrap().material.reflective = 0.5;
         let mut world = World::new();
         let sqrt_two_over_two = 2.0_f64.sqrt() / 2.0;
         world.objects.push(plane.clone());
@@ -269,11 +275,11 @@ mod tests {
             intensity: Color::new(1.0, 1.0, 1.0),
         };
         let mut lower = Shape::plane();
-        lower.material.reflective = 1.0;
-        lower.transform = Matrix4::translation(0.0, -1.0, 0.0);
+        Arc::get_mut(&mut lower).unwrap().material.reflective = 1.0;
+        Arc::get_mut(&mut lower).unwrap().transform = Matrix4::translation(0.0, -1.0, 0.0);
         let mut upper = Shape::plane();
-        upper.material.reflective = 1.0;
-        upper.transform = Matrix4::translation(0.0, 1.0, 0.0);
+        Arc::get_mut(&mut upper).unwrap().material.reflective = 1.0;
+        Arc::get_mut(&mut upper).unwrap().transform = Matrix4::translation(0.0, 1.0, 0.0);
         world.objects.push(lower);
         world.objects.push(upper);
         let ray = Ray {

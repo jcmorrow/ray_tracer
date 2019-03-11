@@ -71,6 +71,7 @@ mod tests {
     use point::vector;
     use ray::Ray;
     use shape::Shape;
+    use std::sync::Arc;
     use utilities::equal;
     use utilities::EPSILON;
 
@@ -220,7 +221,7 @@ mod tests {
             direction: vector(0.0, 0.0, 1.0),
         };
         let mut shape = Shape::sphere();
-        shape.transform = Matrix4::translation(0.0, 0.0, 1.0);
+        Arc::get_mut(&mut shape).unwrap().transform = Matrix4::translation(0.0, 0.0, 1.0);
         let i = Intersection {
             object: shape,
             t: 5.0,

@@ -313,7 +313,7 @@ impl Intersectable {
         }
         let mut intersects: Vec<Intersection> = Vec::new();
         for obj in &self.children {
-            intersects.extend(ray.intersect(obj.clone(), obj.intersectable.clone()));
+            intersects.extend(ray.intersect(obj.clone()));
         }
         intersects
     }
@@ -325,7 +325,6 @@ impl Intersectable {
 
 #[cfg(test)]
 mod tests {
-    use intersectable::Group;
     use intersectable::*;
     use material::Material;
     use matrix::Matrix4;
@@ -334,28 +333,27 @@ mod tests {
 
     #[test]
     fn test_new_triangle() {
-        let s = Triangle::new(point(0., 1., 0.), point(-1., 0., 0.), point(1., 0., 0.));
+        let s = Shape::triangle(point(0., 1., 0.), point(-1., 0., 0.), point(1., 0., 0.));
 
-        assert_eq!(s.e1, vector(-1., -1., 0.));
-        assert_eq!(s.e2, vector(1., -1., 0.));
-        assert_eq!(s.normal, vector(0., 0., 1.));
+        assert_eq!(s.intersectable.e1, vector(-1., -1., 0.));
+        assert_eq!(s.intersectable.e2, vector(1., -1., 0.));
+        assert_eq!(s.intersectable.normal, vector(0., 0., 1.));
     }
 
     #[test]
     fn test_group_intersect_misses() {
-        let g = Group::new();
-        let s = Shape {
+        let s = Arc::new(Shape {
             parent: None,
-            intersectable: Arc::new(g),
+            intersectable: Intersectable::group(),
             material: Material::new(),
             transform: IDENTITY_MATRIX,
-        };
+        });
         let ray = Ray {
             origin: point(0., 0., 0.),
             direction: vector(0., 0., 1.),
         };
 
-        assert_eq!(ray.intersect(&s).len(), 0);
+        assert_eq!(ray.intersect(s).len(), 0);
     }
 
     #[test]
@@ -363,9 +361,9 @@ mod tests {
         let mut g = Shape::group();
         let s1 = Shape::sphere();
         let mut s2 = Shape::sphere();
-        s2.transform = Matrix4::translation(0., 0., -3.);
+        Arc::get_mut(&mut s2).unwrap().transform = Matrix4::translation(0., 0., -3.);
         let mut s3 = Shape::sphere();
-        s3.transform = Matrix4::translation(5., 0., 0.);
+        Arc::get_mut(&mut s3).unwrap().transform = Matrix4::translation(5., 0., 0.);
         let ray = Ray {
             origin: point(0., 0., -5.),
             direction: vector(0., 0., 1.),
@@ -375,19 +373,19 @@ mod tests {
         Shape::add_shape(g.clone(), s2);
         Shape::add_shape(g.clone(), s3);
 
-        assert_eq!(ray.intersect(&g.borrow()).len(), 4);
+        assert_eq!(ray.intersect(g).len(), 4);
     }
 
     #[test]
     fn test_group_local_to_world_space() {
-        let g1 = Shape::group();
-        g1.borrow_mut().transform = Matrix4::rotation_y(PI / 2.);
-        let g2 = Shape::group();
-        g2.borrow_mut().transform = Matrix4::scaling(2., 2., 2.);
+        let mut g1 = Shape::group();
+        Arc::get_mut(&mut g1).unwrap().transform = Matrix4::rotation_y(PI / 2.);
+        let mut g2 = Shape::group();
+        Arc::get_mut(&mut g2).unwrap().transform = Matrix4::scaling(2., 2., 2.);
         let mut s = Shape::sphere();
-        s.transform = Matrix4::translation(5., 0., 0.);
+        Arc::get_mut(&mut s).unwrap().transform = Matrix4::translation(5., 0., 0.);
         // I can't do the adding, because it consumes the shape
-        s.parent = Some(g1.clone());
+        Arc::get_mut(&mut s).unwrap().parent = Some(g1.clone());
         Shape::add_group(g2.clone(), g1);
 
         assert_eq!(s.world_to_object(&point(-2., 0., -10.)), point(0., 0., -1.));
@@ -395,14 +393,14 @@ mod tests {
 
     #[test]
     fn test_group_local_to_world_normal() {
-        let g1 = Shape::group();
-        g1.borrow_mut().transform = Matrix4::rotation_y(PI / 2.);
-        let g2 = Shape::group();
-        g2.borrow_mut().transform = Matrix4::scaling(1., 2., 3.);
+        let mut g1 = Shape::group();
+        Arc::get_mut(&mut g1).unwrap().transform = Matrix4::rotation_y(PI / 2.);
+        let mut g2 = Shape::group();
+        Arc::get_mut(&mut g2).unwrap().transform = Matrix4::scaling(1., 2., 3.);
         let mut s = Shape::sphere();
-        s.transform = Matrix4::translation(5., 0., 0.);
+        Arc::get_mut(&mut s).unwrap().transform = Matrix4::translation(5., 0., 0.);
         // I can't do the adding, because it consumes the shape
-        s.parent = Some(g2.clone());
+        Arc::get_mut(&mut s).unwrap().parent = Some(g2.clone());
         let sqrt_3_over_3 = 3_f64.sqrt() / 3.;
         let v = vector(sqrt_3_over_3, sqrt_3_over_3, sqrt_3_over_3);
         Shape::add_group(g1.clone(), g2);
@@ -412,14 +410,14 @@ mod tests {
 
     #[test]
     fn test_group_normal_at_child() {
-        let g1 = Shape::group();
-        g1.borrow_mut().transform = Matrix4::rotation_y(PI / 2.);
-        let g2 = Shape::group();
-        g2.borrow_mut().transform = Matrix4::scaling(1., 2., 3.);
+        let mut g1 = Shape::group();
+        Arc::get_mut(&mut g1).unwrap().transform = Matrix4::rotation_y(PI / 2.);
+        let mut g2 = Shape::group();
+        Arc::get_mut(&mut g2).unwrap().transform = Matrix4::scaling(1., 2., 3.);
         let mut s = Shape::sphere();
-        s.transform = Matrix4::translation(5., 0., 0.);
+        Arc::get_mut(&mut s).unwrap().transform = Matrix4::translation(5., 0., 0.);
         // I can't do the adding, because it consumes the shape
-        s.parent = Some(g2.clone());
+        Arc::get_mut(&mut s).unwrap().parent = Some(g2.clone());
         let sqrt_3_over_3 = 3_f64.sqrt() / 3.;
         let v = vector(sqrt_3_over_3, sqrt_3_over_3, sqrt_3_over_3);
         Shape::add_group(g1.clone(), g2);

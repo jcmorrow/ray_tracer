@@ -1,5 +1,3 @@
-use intersectable::Intersectable;
-use intersectable::IntersectableType;
 use intersection::Intersection;
 use matrix::Matrix4;
 use point::Point;
@@ -19,10 +17,8 @@ impl Ray {
     pub fn position(&self, t: f64) -> Point {
         self.origin.add(&self.direction.multiply_scalar(t))
     }
-    // fn show_item<T: fmt::Display>(item: T) {
-    //     println!("Item: {}", item);
-    // }
-    pub fn intersect(&self, shape: Arc<Shape>, intersectable: Intersectable) -> Vec<Intersection> {
+
+    pub fn intersect(&self, shape: Arc<Shape>) -> Vec<Intersection> {
         // ray_count.with(|count_cell| {
         //     let plus = *count_cell.borrow() + 1;
         //     count_cell.replace(plus);
@@ -31,13 +27,13 @@ impl Ray {
         //     }
         // });
         let ray = self.transform(shape.transform.inverse());
-        intersectable.local_intersect(&ray, shape.clone())
+        shape.intersectable.local_intersect(&ray, shape.clone())
     }
 
     pub fn intersect_world(&self, world: &World) -> Vec<Intersection> {
         let mut intersections: Vec<Intersection> = Vec::new();
         for object in &world.objects {
-            intersections.extend(self.intersect(object.clone(), object.intersectable.clone()));
+            intersections.extend(self.intersect(object.clone()));
         }
         let mut positive_intersections: Vec<Intersection> = Vec::new();
         for intersection in intersections {
@@ -59,13 +55,14 @@ impl Ray {
 
 #[cfg(test)]
 mod tests {
-    use intersectable::Sphere;
+    use intersectable::Intersectable;
     use material::Material;
     use matrix::Matrix4;
     use point::point;
     use point::vector;
     use ray::Ray;
     use shape::Shape;
+    use std::sync::Arc;
     use world::World;
 
     #[test]
@@ -99,7 +96,7 @@ mod tests {
             direction: vector(0.0, 0.0, 1.0),
         };
         let s = Shape::sphere();
-        let xs = ray.intersect(&s);
+        let xs = ray.intersect(s);
 
         assert_eq!(xs.len(), 2);
         assert_eq!(xs[0].t, 4.0);
@@ -113,7 +110,7 @@ mod tests {
             direction: vector(0.0, 0.0, 1.0),
         };
         let s = Shape::sphere();
-        let xs = ray.intersect(&s);
+        let xs = ray.intersect(s);
 
         assert_eq!(xs.len(), 2);
         assert_eq!(xs[0].t, 5.0);
@@ -127,7 +124,7 @@ mod tests {
             direction: vector(0.0, 0.0, 1.0),
         };
         let s = Shape::sphere();
-        let xs = ray.intersect(&s);
+        let xs = ray.intersect(s);
 
         assert_eq!(xs.len(), 0);
     }
@@ -139,7 +136,7 @@ mod tests {
             direction: vector(0.0, 0.0, 1.0),
         };
         let s = Shape::sphere();
-        let xs = ray.intersect(&s);
+        let xs = ray.intersect(s);
 
         assert_eq!(xs.len(), 2);
         assert_eq!(xs[0].t, -1.0);
@@ -153,7 +150,7 @@ mod tests {
             direction: vector(0.0, 0.0, 1.0),
         };
         let s = Shape::sphere();
-        let xs = ray.intersect(&s);
+        let xs = ray.intersect(s);
 
         assert_eq!(xs.len(), 2);
         assert_eq!(xs[0].t, -6.0);
@@ -192,14 +189,14 @@ mod tests {
             origin: point(0.0, 0.0, -5.0),
             direction: vector(0.0, 0.0, 1.0),
         };
-        let s = Shape {
+        let s = Arc::new(Shape {
             parent: None,
             transform: Matrix4::scaling(2.0, 2.0, 2.0),
             material: Material::new(),
-            intersectable: Arc::new(Sphere {}),
-        };
+            intersectable: Intersectable::sphere(),
+        });
 
-        let xs = r.intersect(&s);
+        let xs = r.intersect(s);
 
         assert_eq!(xs.len(), 2);
         assert_eq!(xs[0].t, 3.0);
@@ -212,14 +209,14 @@ mod tests {
             origin: point(0.0, 0.0, -5.0),
             direction: vector(0.0, 0.0, 1.0),
         };
-        let s = Shape {
+        let s = Arc::new(Shape {
             parent: None,
-            intersectable: Arc::new(Sphere {}),
+            intersectable: Intersectable::sphere(),
             transform: Matrix4::translation(5.0, 0.0, 0.0),
             material: Material::new(),
-        };
+        });
 
-        let xs = r.intersect(&s);
+        let xs = r.intersect(s);
 
         assert_eq!(xs.len(), 0);
     }

@@ -3,7 +3,6 @@ use patternable::Patternable;
 use point::Point;
 use point_light::PointLight;
 use shape::Shape;
-use std::sync::Arc;
 use utilities::equal;
 
 #[derive(Debug, Clone)]
@@ -12,8 +11,10 @@ pub struct Material {
     pub diffuse: f64,
     pub pattern: Patternable,
     pub reflective: f64,
+    pub refractive_index: f64,
     pub shininess: f64,
     pub specular: f64,
+    pub transparency: f64,
 }
 
 impl Material {
@@ -21,10 +22,12 @@ impl Material {
         Material {
             ambient: 0.1,
             diffuse: 0.9,
-            shininess: 200.0,
+            shininess: 200.,
             specular: 0.9,
             pattern: Patternable::solid(Color::white()),
-            reflective: 0.0,
+            reflective: 0.,
+            transparency: 0.,
+            refractive_index: 1.,
         }
     }
 
@@ -78,7 +81,7 @@ impl Material {
 mod tests {
     use color::Color;
     use material::Material;
-    use patternable::Stripe;
+    use patternable::Patternable;
     use point::point;
     use point::vector;
     use point_light::PointLight;
@@ -198,7 +201,7 @@ mod tests {
     fn test_lighting_with_pattern() {
         let object = Shape::sphere();
         let mut m = Material::new();
-        m.pattern = Arc::new(Stripe::new(Color::black(), Color::white()));
+        m.pattern = Patternable::stripe(Color::black(), Color::white());
         m.ambient = 1.0;
         m.diffuse = 0.0;
         m.specular = 0.0;
