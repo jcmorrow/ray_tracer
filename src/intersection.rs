@@ -16,6 +16,8 @@ pub struct Precompute {
     pub inside: bool,
     pub normalv: Point,
     pub object: Arc<Shape>,
+    pub n1: f64,
+    pub n2: f64,
     pub over_point: Point,
     pub point: Point,
     pub reflectv: Point,
@@ -36,24 +38,62 @@ impl Intersection {
                     hit = h.clone();
                 }
             }
-            return Some(hit);
+            Some(hit)
+        } else {
+            None
         }
-        return None;
     }
 
-    pub fn precompute(&self, ray: &Ray) -> Precompute {
+    pub fn precompute(&self, ray: &Ray, xs: Vec<Intersection>) -> Precompute {
         let point = ray.position(self.t);
         let normalv = self.object.normal_at(&point);
         let mut precompute = Precompute {
             eyev: ray.direction.multiply_scalar(-1.0),
             inside: false,
-            normalv: normalv,
+            n1: 1.,
+            n2: 1.,
+            normalv,
             object: self.object.clone(),
             over_point: point.add(&normalv.multiply_scalar(EPSILON)),
-            point: point,
-            t: self.t,
+            point,
             reflectv: ray.direction.reflect(&normalv),
+            t: self.t,
         };
+
+        let mut containers: Vec<Arc<Shape>> = Vec::new();
+
+        for i in xs {
+            if i == *self {
+                if containers.len() > 0 {
+                    precompute.n1 = containers.last().unwrap().material.refractive_index;
+                } else {
+                    precompute.n1 = 1.;
+                }
+            }
+            let mut included = false;
+            for s in &containers {
+                if s == &i.object {
+                    included = true;
+                }
+            }
+            if included {
+                containers = containers
+                    .iter()
+                    .cloned()
+                    .filter(|obj| obj != &i.object)
+                    .collect()
+            } else {
+                containers.push(i.object.clone());
+            }
+            if i == *self {
+                if containers.len() > 0 {
+                    precompute.n2 = containers.last().unwrap().material.refractive_index;
+                } else {
+                    precompute.n2 = 1.;
+                }
+            }
+        }
+
         if precompute.normalv.dot(&precompute.eyev) < 0.0 {
             precompute.inside = true;
             precompute.normalv = precompute.normalv.multiply_scalar(-1.0);
@@ -168,7 +208,7 @@ mod tests {
             t: 4.0,
         };
 
-        let precompute = i.precompute(&r);
+        let precompute = i.precompute(&r, Vec::new());
 
         assert_eq!(
             precompute,
@@ -176,6 +216,8 @@ mod tests {
                 eyev: vector(0.0, 0.0, -1.0),
                 reflectv: vector(0.0, 0.0, -1.0),
                 inside: false,
+                n1: 1.,
+                n2: 1.,
                 normalv: vector(0.0, 0.0, -1.0),
                 object: shape,
                 over_point: point(0.0, 0.0, -1.00001),
@@ -197,13 +239,15 @@ mod tests {
             t: 1.0,
         };
 
-        let precompute = i.precompute(&r);
+        let precompute = i.precompute(&r, Vec::new());
 
         assert_eq!(
             precompute,
             Precompute {
                 eyev: vector(0.0, 0.0, -1.0),
                 inside: true,
+                n1: 1.,
+                n2: 1.,
                 normalv: vector(0.0, 0.0, -1.0),
                 object: shape,
                 over_point: point(0.0, 0.0, 1.00001),
@@ -227,7 +271,7 @@ mod tests {
             t: 5.0,
         };
 
-        let precompute = i.precompute(&r);
+        let precompute = i.precompute(&r, Vec::new());
 
         assert!(precompute.over_point.z < -EPSILON / 2.0);
         assert!(precompute.point.z > precompute.over_point.z);
@@ -246,7 +290,7 @@ mod tests {
             t: 5.0,
         };
 
-        let precompute = i.precompute(&r);
+        let precompute = i.precompute(&r, Vec::new());
 
         assert!(precompute
             .reflectv

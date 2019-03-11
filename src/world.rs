@@ -69,7 +69,7 @@ impl World {
     pub fn color_at(&self, ray: &Ray, remaining: i32) -> Color {
         let hits = ray.intersect_world(&self);
         if hits.len() > 0 {
-            self.shade_hit(hits[0].precompute(&ray), remaining)
+            self.shade_hit(hits[0].precompute(&ray, Vec::new()), remaining)
         } else {
             Color::black()
         }
@@ -141,7 +141,7 @@ mod tests {
             object: default_world.objects[0].clone(),
             t: 4.0,
         };
-        let comps = i.precompute(&r);
+        let comps = i.precompute(&r, Vec::new());
         let c = default_world.shade_hit(comps, 10);
 
         assert_eq!(c, Color::new(0.38066, 0.47583, 0.2855));
@@ -162,7 +162,7 @@ mod tests {
             object: world.objects[1].clone(),
             t: 0.5,
         };
-        let comps = i.precompute(&r);
+        let comps = i.precompute(&r, Vec::new());
         let c = world.shade_hit(comps, 10);
 
         assert_eq!(c, Color::new(0.1, 0.1, 0.1));
@@ -234,7 +234,7 @@ mod tests {
             .material
             .ambient = 1.0;
         let intersection = ray.intersect_world(&world)[0].clone();
-        let comps = intersection.precompute(&ray);
+        let comps = intersection.precompute(&ray, Vec::new());
         let color = world.reflected_color(&comps, 10);
         assert_eq!(color, Color::black());
     }
@@ -255,7 +255,7 @@ mod tests {
             object: plane,
             t: 2.0_f64.sqrt(),
         };
-        let comps = intersection.precompute(&ray);
+        let comps = intersection.precompute(&ray, Vec::new());
         let color = world.reflected_color(&comps, 10);
         assert_eq!(
             color,

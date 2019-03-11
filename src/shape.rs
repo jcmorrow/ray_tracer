@@ -122,6 +122,8 @@ impl PartialEq for Shape {
 
 #[cfg(test)]
 mod tests {
+    use intersection::Intersection;
+    use intersection::Precompute;
     use material::Material;
     use matrix::Matrix4;
     use matrix::IDENTITY_MATRIX;
@@ -323,6 +325,13 @@ mod tests {
         Shape::triangle(point(0., 1., 0.), point(-1., 0., 0.), point(1., 0., 0.))
     }
 
+    fn glass_sphere(t: Matrix4, r: f64) -> Arc<Shape> {
+        let mut s = Shape::glass_sphere();
+        Arc::get_mut(&mut s).unwrap().transform = t;
+        Arc::get_mut(&mut s).unwrap().material.refractive_index = r;
+        s
+    }
+
     #[test]
     fn test_triangle_intersection_misses() {
         let t = triangle();
@@ -355,4 +364,64 @@ mod tests {
     //         assert_eq!(ray.intersect(t.clone()).len(), 1);
     //         assert_eq!(ray.intersect(t.clone())[0].t, 2.);
     //     }
+
+    #[test]
+    fn test_glass_sphere() {
+        let a = glass_sphere(Matrix4::scaling(2., 2., 2.), 1.5);
+        let b = glass_sphere(Matrix4::translation(0., 0., -0.25), 2.);
+        let c = glass_sphere(Matrix4::translation(0., 0., 0.25), 2.5);
+
+        let r = Ray {
+            origin: point(0., 0., -4.),
+            direction: vector(0., 0., 1.),
+        };
+
+        let xs: Vec<Intersection> = vec![
+            Intersection {
+                object: a.clone(),
+                t: 2.,
+            },
+            Intersection {
+                object: b.clone(),
+                t: 2.75,
+            },
+            Intersection {
+                object: c.clone(),
+                t: 3.25,
+            },
+            Intersection {
+                object: b.clone(),
+                t: 4.75,
+            },
+            Intersection {
+                object: c.clone(),
+                t: 5.25,
+            },
+            Intersection {
+                object: a.clone(),
+                t: 6.,
+            },
+        ];
+        let prepared_xs: Vec<Precompute> = xs
+            .iter()
+            .map(|int| int.precompute(&r, xs.clone()))
+            .collect();
+
+        let ns: Vec<(f64, f64)> = prepared_xs.iter().map(|x| (x.n1, x.n2)).collect();
+        println!("{:?}", ns);
+
+        let expectations: Vec<(usize, f64, f64)> = vec![
+            (0, 1.0, 1.5),
+            (1, 1.5, 2.0),
+            (2, 2.0, 2.5),
+            (3, 2.5, 2.5),
+            (4, 2.5, 1.5),
+            (5, 1.5, 1.0),
+        ];
+
+        for e in expectations {
+            assert_eq!(prepared_xs[e.0].n1, e.1);
+            assert_eq!(prepared_xs[e.0].n2, e.2);
+        }
+    }
 }
