@@ -1,8 +1,8 @@
 use point::Point;
 use ray::Ray;
 use shape::Shape;
-use std::f64::EPSILON;
 use std::sync::Arc;
+use utilities::EPSILON;
 
 #[derive(Clone, Debug, PartialEq)]
 pub struct Intersection {

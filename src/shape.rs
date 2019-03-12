@@ -1,8 +1,10 @@
 use bounds::Bounds;
+use color::Color;
 use intersectable::*;
 use material::Material;
 use matrix::Matrix4;
 use matrix::IDENTITY_MATRIX;
+use patternable::Patternable;
 use point::Point;
 use std::sync::Arc;
 
@@ -31,8 +33,12 @@ impl Shape {
             material: Material::new(),
             intersectable: Intersectable::sphere(),
         };
-        s.material.refractive_index = 1.5;
+        s.material.refractive_index = 1.0;
         s.material.transparency = 1.;
+        s.material.specular = 1.;
+        s.material.shininess = 300.;
+        s.material.diffuse = 0.;
+        s.material.pattern = Patternable::solid(Color::white());
         Arc::new(s)
     }
 
@@ -408,7 +414,6 @@ mod tests {
             .collect();
 
         let ns: Vec<(f64, f64)> = prepared_xs.iter().map(|x| (x.n1, x.n2)).collect();
-        println!("{:?}", ns);
 
         let expectations: Vec<(usize, f64, f64)> = vec![
             (0, 1.0, 1.5),

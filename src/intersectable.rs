@@ -3,11 +3,9 @@ use intersection::Intersection;
 use point::{bounds, point, vector, Point};
 use ray::Ray;
 use shape::Shape;
-use std::f64::EPSILON;
 use std::f64::INFINITY;
 use std::sync::Arc;
-use utilities::equal;
-use utilities::{max, min};
+use utilities::{max, min, EPSILON};
 
 #[derive(Debug, Clone)]
 pub enum IntersectableType {
@@ -211,9 +209,9 @@ impl Intersectable {
         .cloned()
         .fold(std::f64::NAN, f64::max);
 
-        if equal(maxc, local_point.x.abs()) {
+        if maxc == local_point.x.abs() {
             vector(local_point.x, 0., 0.)
-        } else if equal(maxc, local_point.y.abs()) {
+        } else if maxc == local_point.y.abs() {
             vector(0., local_point.y, 0.)
         } else {
             vector(0., 0., local_point.z)

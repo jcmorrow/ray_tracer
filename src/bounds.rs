@@ -1,8 +1,8 @@
 use point::point;
 use point::Point;
 use ray::Ray;
-use std::f64::EPSILON;
 use std::f64::INFINITY;
+use utilities::EPSILON;
 use utilities::{max, min};
 
 pub struct Bounds {
