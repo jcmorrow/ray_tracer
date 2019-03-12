@@ -63,7 +63,9 @@ impl World {
         );
 
         let reflected_color = self.reflected_color(&precompute, remaining);
-        surface_color.add(&reflected_color)
+        surface_color
+            .add(&reflected_color)
+            .add(&self.refracted_color_at(precompute, remaining))
     }
 
     pub fn color_at(&self, ray: &Ray, remaining: i32) -> Color {
@@ -72,6 +74,39 @@ impl World {
             self.shade_hit(hits[0].precompute(&ray, Vec::new()), remaining)
         } else {
             Color::black()
+        }
+    }
+
+    pub fn refracted_color_at(&self, precompute: Precompute, remaining: i32) -> Color {
+        return Color::black();
+        if remaining == 0 {
+            return Color::black();
+        }
+
+        // total internal reflection
+        let n_ratio = precompute.n1 / precompute.n2;
+        let cos_i = precompute.eyev.dot(&precompute.normalv);
+        let sin2_t = n_ratio.powi(2) * (1. - cos_i.powi(2));
+        if sin2_t > 1. {
+            return Color::black();
+        }
+
+        if precompute.object.material.transparency == 0. {
+            Color::black()
+        } else {
+            let cos_t = (1. - sin2_t).sqrt();
+            let direction = precompute
+                .normalv
+                .multiply_scalar(n_ratio * cos_i - cos_t)
+                .sub(&precompute.eyev.multiply_scalar(n_ratio));
+            self.color_at(
+                &Ray {
+                    origin: precompute.under_point,
+                    direction,
+                },
+                remaining - 1,
+            )
+            .multiply_scalar(precompute.object.material.transparency)
         }
     }
 
