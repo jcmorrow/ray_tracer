@@ -47,10 +47,15 @@ impl Intersection {
 
     pub fn precompute(&self, ray: &Ray, xs: Vec<Intersection>) -> Precompute {
         let point = ray.position(self.t);
-        let normalv = self.object.normal_at(&point);
+        let mut normalv = self.object.normal_at(&point);
+        let mut inside = false;
+        if normalv.dot(&ray.direction.multiply_scalar(-1.)) < 0. {
+            inside = true;
+            normalv = normalv.multiply_scalar(-1.);
+        }
         let mut precompute = Precompute {
             eyev: ray.direction.multiply_scalar(-1.0),
-            inside: false,
+            inside,
             n1: 1.,
             n2: 1.,
             normalv,
@@ -93,6 +98,7 @@ impl Intersection {
                 } else {
                     precompute.n2 = 1.;
                 }
+                break;
             }
         }
 

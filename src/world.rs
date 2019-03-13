@@ -71,7 +71,7 @@ impl World {
     pub fn color_at(&self, ray: &Ray, remaining: i32) -> Color {
         let hits = ray.intersect_world(&self);
         if !hits.is_empty() {
-            self.shade_hit(hits[0].precompute(&ray, Vec::new()), remaining)
+            self.shade_hit(hits[0].precompute(&ray, hits.clone()), remaining)
         } else {
             Color::black()
         }
@@ -98,7 +98,6 @@ impl World {
             .normalv
             .multiply_scalar(n_ratio * cos_i - cos_t)
             .sub(&precompute.eyev.multiply_scalar(n_ratio));
-        // println!("{:?}", precompute.object.material.transparency);
         self.color_at(
             &Ray {
                 origin: precompute.under_point,

@@ -33,12 +33,13 @@ impl Shape {
             material: Material::new(),
             intersectable: Intersectable::sphere(),
         };
-        s.material.refractive_index = 1.0;
+        s.material.refractive_index = 1.5;
         s.material.transparency = 1.;
         s.material.specular = 1.;
         s.material.shininess = 300.;
-        s.material.diffuse = 0.;
-        s.material.pattern = Patternable::solid(Color::white());
+        s.material.diffuse = 0.1;
+        s.material.ambient = 0.2;
+        s.material.pattern = Patternable::solid(Color::black());
         Arc::new(s)
     }
 

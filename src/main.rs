@@ -43,31 +43,27 @@ fn main() -> std::io::Result<()> {
     world.objects = Vec::new();
 
     let mut sphere = Shape::glass_sphere();
-    Arc::get_mut(&mut sphere).unwrap().transform = Matrix4::translation(0., 0.5, 0.);
+    Arc::get_mut(&mut sphere).unwrap().transform = Matrix4::translation(0., 1., 0.);
     let mut floor = Shape::plane();
-    // let mut wall = Shape::plane();
-    Arc::get_mut(&mut floor).unwrap().transform = Matrix4::translation(0., 0.1, 0.);
+    let mut wall = Shape::plane();
+    Arc::get_mut(&mut wall).unwrap().transform =
+        Matrix4::translation(0., 0., 7.).multiply(&Matrix4::rotation_x(PI / 2.));
 
     let pattern = Patternable::checker(Color::black(), Color::white());
-    // let mut sphere_material = Material::new();
-    // sphere_material.transparency = 1.;
-    // sphere_material.refractive_index = 1.5;
-    // sphere_material.ambient = 1.;
-    // sphere_material.pattern = Patternable::solid(Color::new(0.1, 0.1, 0.1));
     let mut floor_material = Material::new();
     floor_material.pattern = pattern;
     floor_material.pattern.transform = Matrix4::scaling(0.2, 0.2, 0.2);
 
-    // Arc::get_mut(&mut sphere).unwrap().material = sphere_material.clone();
-    Arc::get_mut(&mut floor).unwrap().material = floor_material;
-    // Arc::get_mut(&mut wall).unwrap().material = floor_material;
+    Arc::get_mut(&mut floor).unwrap().material = floor_material.clone();
+    Arc::get_mut(&mut wall).unwrap().material = floor_material.clone();
 
     world.objects.push(sphere);
     world.objects.push(floor);
+    world.objects.push(wall);
 
     let mut camera = Camera::new(600, 600, PI / 8.);
-    let from = point(0., 3., -2.);
-    let to = point(0., 0.07, 0.5);
+    let from = point(0., 1., -2.5);
+    let to = point(0., 0., 0.);
     let up = point(0., 0., 1.);
     camera.transform = TransformationMatrix::new(&from, &to, &up);
 
