@@ -61,8 +61,8 @@ fn main() -> std::io::Result<()> {
     world.objects.push(floor);
     world.objects.push(wall);
 
-    let mut camera = Camera::new(600, 600, PI / 8.);
-    let from = point(0., 1., -2.5);
+    let mut camera = Camera::new(600, 600, PI / 6.);
+    let from = point(0., 1., -2.);
     let to = point(0., 0., 0.);
     let up = point(0., 0., 1.);
     camera.transform = TransformationMatrix::new(&from, &to, &up);

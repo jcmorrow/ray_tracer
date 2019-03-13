@@ -70,10 +70,10 @@ impl World {
 
     pub fn color_at(&self, ray: &Ray, remaining: i32) -> Color {
         let hits = ray.intersect_world(&self);
-        if !hits.is_empty() {
-            self.shade_hit(hits[0].precompute(&ray, hits.clone()), remaining)
-        } else {
+        if hits.is_empty() {
             Color::black()
+        } else {
+            self.shade_hit(hits[0].precompute(&ray, hits.clone()), remaining)
         }
     }
 
@@ -202,7 +202,7 @@ mod tests {
         let comps = i.precompute(&r, Vec::new());
         let c = world.shade_hit(comps, 10);
 
-        assert_eq!(c, Color::new(0.1, 0.1, 0.1));
+        assert_eq!(c, Color::new(0.904984472, 0.904984472, 0.904984472));
     }
 
     #[test]
@@ -324,7 +324,7 @@ mod tests {
             direction: vector(0.0, 1.0, 0.0),
         };
 
-        assert_eq!(world.color_at(&ray, 10), Color::new(0.1, 0.1, 0.1));
+        assert_eq!(world.color_at(&ray, 10), Color::new(1.9, 1.9, 1.9));
     }
 
     #[test]
