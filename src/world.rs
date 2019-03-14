@@ -63,9 +63,18 @@ impl World {
         );
 
         let reflected_color = self.reflected_color(&precompute, remaining);
-        surface_color
-            .add(&reflected_color)
-            .add(&self.refracted_color_at(&precompute, remaining))
+        let refracted_color = self.refracted_color_at(&precompute, remaining);
+
+        if precompute.object.material.transparency > 0.
+            && precompute.object.material.reflective > 0.
+        {
+            let reflectance = Intersection::schlick(&precompute);
+            surface_color
+                .add(&reflected_color.multiply_scalar(reflectance))
+                .add(&refracted_color.multiply_scalar(1. - reflectance))
+        } else {
+            surface_color.add(&reflected_color).add(&refracted_color)
+        }
     }
 
     pub fn color_at(&self, ray: &Ray, remaining: i32) -> Color {

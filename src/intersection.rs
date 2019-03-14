@@ -108,6 +108,24 @@ impl Intersection {
         }
         precompute
     }
+
+    pub fn schlick(precompute: &Precompute) -> f64 {
+        let mut cos = precompute.eyev.dot(&precompute.normalv);
+        if precompute.n1 > precompute.n2 {
+            let n = precompute.n1 / precompute.n2;
+            let sin2_t = n.powi(2) * (1. - cos.powi(2));
+            if sin2_t > 1. {
+                return 1.;
+            }
+
+            let cos_t = (1. - sin2_t).sqrt();
+            cos = cos_t;
+        }
+
+        let r0 = ((precompute.n1 - precompute.n2) / (precompute.n1 + precompute.n2)).powi(2);
+
+        r0 + (1. - r0) * (1. - cos).powi(5)
+    }
 }
 
 #[cfg(test)]
