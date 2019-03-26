@@ -11,6 +11,7 @@ use matrix::Matrix4;
 // use obj_parser::ObjParser;
 use patternable::*;
 use point::point;
+use point_light::PointLight;
 use shape::Shape;
 use std::f64::consts::PI;
 use std::fs::File;
@@ -41,6 +42,10 @@ mod world;
 fn main() -> std::io::Result<()> {
     let mut world = World::new();
     world.objects = Vec::new();
+    world.light_source = PointLight {
+        intensity: Color::new(1.0, 1.0, 1.0),
+        position: point(0.0, 10.0, 0.0),
+    };
 
     let mut sphere = Shape::sphere();
     Arc::get_mut(&mut sphere).unwrap().transform =
@@ -61,9 +66,9 @@ fn main() -> std::io::Result<()> {
     Arc::get_mut(&mut floor).unwrap().transform = Matrix4::translation(0., -0.01, 0.);
 
     let mut sphere_material = Material::new();
-    sphere_material.reflective = 0.7;
-    sphere_material.transparency = 0.8;
-    sphere_material.refractive_index = 1.5;
+    sphere_material.reflective = 1.0;
+    sphere_material.transparency = 1.0;
+    sphere_material.refractive_index = 1.2;
     sphere_material.ambient = 0.1;
     sphere_material.diffuse = 0.1;
     sphere_material.shininess = 300.;
@@ -71,10 +76,10 @@ fn main() -> std::io::Result<()> {
     let mut floor_material = Material::new();
     floor_material.reflective = 0.0;
     let mut checker = Patternable::checker(Color::new(0.2, 0.4, 0.9), Color::white());
-    checker.transform = Matrix4::scaling(0.1, 0.1, 0.1);
+    checker.transform = Matrix4::scaling(0.4, 0.4, 0.4);
     floor_material.pattern = checker;
 
-    let mut pattern = Patternable::solid(Color::black());
+    let mut pattern = Patternable::solid(Color::white());
     let white = Patternable::solid(Color::white());
     // let gradient = Patternable::gradient(Color::new(0.9, 0.1, 0.1), Color::white());
     // let mut perlin = Patternable::perlin(gradient);
@@ -89,15 +94,15 @@ fn main() -> std::io::Result<()> {
     Arc::get_mut(&mut wall).unwrap().material = floor_material.clone();
 
     world.objects.push(sphere);
-    world.objects.push(sphere2);
+    // world.objects.push(sphere2);
     // world.objects.push(sphere3);
     world.objects.push(floor);
     world.objects.push(wall);
 
-    let mut camera = Camera::new(180, 180, PI / 6.);
-    let from = point(0., 0.25, -1.);
+    let mut camera = Camera::new(700, 700, PI / 6.);
+    let from = point(0., 2., 0.);
     let to = point(0., 0.2, 0.0);
-    let up = point(0., 1., 0.);
+    let up = point(0., 0., 1.);
     camera.transform = TransformationMatrix::new(&from, &to, &up);
 
     let now = Local::now();
