@@ -9,128 +9,102 @@ use utilities::equal;
 
 #[derive(Debug, Clone)]
 pub enum PatternableType {
-    Blended,
-    Checker,
-    Gradient,
-    Perlin,
-    Ring,
-    Solid,
-    Stripe,
+    Blended(Box<Patternable>, Box<Patternable>),
+    Checker(Box<Patternable>, Box<Patternable>),
+    Gradient(Box<Patternable>, Box<Patternable>),
+    Perlin(PerlinNoise, Box<Patternable>, f64),
+    Ring(Box<Patternable>, Box<Patternable>),
+    Solid(Color),
+    Stripe(Box<Patternable>, Box<Patternable>),
 }
 
 #[derive(Debug, Clone)]
 pub struct Patternable {
-    color: Color,
     patternable_type: PatternableType,
-    secondary: Color,
     pub transform: Matrix4,
-    primary_pattern: Option<Box<Patternable>>,
-    secondary_pattern: Option<Box<Patternable>>,
-    perlin: PerlinNoise,
-    pub perlin_factor: f64,
 }
 
 impl Patternable {
     pub fn solid(color: Color) -> Patternable {
         Patternable {
-            color,
-            patternable_type: PatternableType::Solid,
-            secondary: Color::white(),
+            patternable_type: PatternableType::Solid(color),
             transform: IDENTITY_MATRIX,
-            primary_pattern: None,
-            secondary_pattern: None,
-            perlin: PerlinNoise::new(),
-            perlin_factor: 0.,
         }
     }
 
     pub fn gradient(color: Color, secondary: Color) -> Patternable {
         Patternable {
-            color,
-            patternable_type: PatternableType::Gradient,
-            secondary,
+            patternable_type: PatternableType::Gradient(
+                Box::new(Patternable::solid(color)),
+                Box::new(Patternable::solid(secondary)),
+            ),
             transform: IDENTITY_MATRIX,
-            primary_pattern: None,
-            secondary_pattern: None,
-            perlin: PerlinNoise::new(),
-            perlin_factor: 0.,
         }
     }
 
     pub fn checker(color: Color, secondary: Color) -> Patternable {
         Patternable {
-            color,
-            patternable_type: PatternableType::Checker,
-            secondary,
+            patternable_type: PatternableType::Checker(
+                Box::new(Patternable::solid(color)),
+                Box::new(Patternable::solid(secondary)),
+            ),
             transform: IDENTITY_MATRIX,
-            primary_pattern: None,
-            secondary_pattern: None,
-            perlin: PerlinNoise::new(),
-            perlin_factor: 0.,
         }
     }
 
     pub fn stripe(color: Color, secondary: Color) -> Patternable {
         Patternable {
-            color,
-            patternable_type: PatternableType::Stripe,
-            secondary,
+            patternable_type: PatternableType::Stripe(
+                Box::new(Patternable::solid(color)),
+                Box::new(Patternable::solid(secondary)),
+            ),
             transform: IDENTITY_MATRIX,
-            primary_pattern: None,
-            secondary_pattern: None,
-            perlin: PerlinNoise::new(),
-            perlin_factor: 0.,
         }
     }
 
     pub fn ring(color: Color, secondary: Color) -> Patternable {
         Patternable {
-            color,
-            patternable_type: PatternableType::Ring,
-            secondary,
+            patternable_type: PatternableType::Ring(
+                Box::new(Patternable::solid(color)),
+                Box::new(Patternable::solid(secondary)),
+            ),
             transform: IDENTITY_MATRIX,
-            primary_pattern: None,
-            secondary_pattern: None,
-            perlin: PerlinNoise::new(),
-            perlin_factor: 0.,
         }
     }
 
-    pub fn blended(primary_pattern: Patternable, secondary_pattern: Patternable) -> Patternable {
+    pub fn blended(primary: Patternable, secondary: Patternable) -> Patternable {
         Patternable {
-            color: Color::white(),
-            patternable_type: PatternableType::Blended,
-            secondary: Color::white(),
+            patternable_type: PatternableType::Blended(Box::new(primary), Box::new(secondary)),
             transform: IDENTITY_MATRIX,
-            primary_pattern: Some(Box::new(primary_pattern)),
-            secondary_pattern: Some(Box::new(secondary_pattern)),
-            perlin: PerlinNoise::new(),
-            perlin_factor: 0.,
         }
     }
 
-    pub fn perlin(primary_pattern: Patternable) -> Patternable {
+    pub fn perlin(pattern: Patternable) -> Patternable {
         Patternable {
-            color: Color::white(),
-            patternable_type: PatternableType::Perlin,
-            secondary: Color::white(),
+            patternable_type: PatternableType::Perlin(PerlinNoise::new(), Box::new(pattern), 0.25),
             transform: IDENTITY_MATRIX,
-            primary_pattern: Some(Box::new(primary_pattern)),
-            secondary_pattern: None,
-            perlin: PerlinNoise::new(),
-            perlin_factor: 0.25,
         }
     }
 
     pub fn color_at(&self, point: &Point) -> Color {
         match self.patternable_type {
-            PatternableType::Blended => self.color_at_blended(point),
-            PatternableType::Checker => self.color_at_checker(point),
-            PatternableType::Gradient => self.color_at_gradient(point),
-            PatternableType::Perlin => self.color_at_perlin(point),
-            PatternableType::Solid => self.color_at_solid(point),
-            PatternableType::Stripe => self.color_at_stripe(point),
-            _ => Color::white(),
+            PatternableType::Blended(ref a, ref b) => self.color_at_blended(point, a, b),
+            PatternableType::Checker(ref a, ref b) => {
+                self.color_at_checker(point, a.color_at(point), b.color_at(point))
+            }
+            PatternableType::Gradient(ref a, ref b) => {
+                self.color_at_gradient(point, a.color_at(point), b.color_at(point))
+            }
+            PatternableType::Perlin(perlin, ref pattern, factor) => {
+                self.color_at_perlin(point, pattern, perlin, factor)
+            }
+            PatternableType::Ring(ref a, ref b) => {
+                self.color_at_ring(point, a.color_at(point), b.color_at(point))
+            }
+            PatternableType::Solid(c) => c,
+            PatternableType::Stripe(ref a, ref b) => {
+                self.color_at_stripe(point, a.color_at(point), b.color_at(point))
+            }
         }
     }
 
@@ -140,67 +114,53 @@ impl Patternable {
         self.color_at(&pattern_local)
     }
 
-    fn color_at_solid(&self, _point: &Point) -> Color {
-        self.color
+    fn color_at_gradient(&self, point: &Point, a: Color, b: Color) -> Color {
+        let difference = a.sub(&b);
+        a.add(&difference.multiply_scalar(point.x - point.x.floor()))
     }
 
-    fn color_at_gradient(&self, point: &Point) -> Color {
-        let difference = self.secondary.sub(&self.color);
-        self.color
-            .add(&difference.multiply_scalar(point.x - point.x.floor()))
-    }
-
-    fn color_at_checker(&self, point: &Point) -> Color {
+    fn color_at_checker(&self, point: &Point, primary: Color, secondary: Color) -> Color {
         let sum = point.x.round() + point.y.round() + point.z.round();
         if equal(sum.abs() % 2., 0.) {
-            self.color
+            primary
         } else {
-            self.secondary
+            secondary
         }
     }
 
-    fn color_at_stripe(&self, point: &Point) -> Color {
+    fn color_at_stripe(&self, point: &Point, a: Color, b: Color) -> Color {
         if equal(point.x.floor().abs() % 2.0, 0.0) {
-            self.color
+            a
         } else {
-            self.secondary
+            b
         }
     }
 
-    fn color_at_ring(&self, point: &Point) -> Color {
+    fn color_at_ring(&self, point: &Point, a: Color, b: Color) -> Color {
         if (point.x.powi(2) + point.z.powi(2)).sqrt().floor() % 2.0 == 0.0 {
-            self.color
+            a
         } else {
-            self.secondary
+            b
         }
     }
 
-    fn color_at_perlin(&self, local_point: &Point) -> Color {
-        let addition = self
-            .perlin
-            .get([local_point.x, local_point.y, local_point.z])
-            * self.perlin_factor;
-        if let Some(ref p) = self.primary_pattern {
-            p.color_at(&point(
-                local_point.x + addition,
-                local_point.y + addition,
-                local_point.z + addition,
-            ))
-        } else {
-            Color::white()
-        }
+    fn color_at_perlin(
+        &self,
+        local_point: &Point,
+        pattern: &Patternable,
+        perlin: PerlinNoise,
+        factor: f64,
+    ) -> Color {
+        let addition = perlin.get([local_point.x, local_point.y, local_point.z]) * factor;
+        pattern.color_at(&point(
+            local_point.x + addition,
+            local_point.y + addition,
+            local_point.z + addition,
+        ))
     }
 
-    fn color_at_blended(&self, point: &Point) -> Color {
-        if let Some(ref a) = self.primary_pattern {
-            if let Some(ref b) = self.secondary_pattern {
-                a.color_at(&point).add(&b.color_at(&point)).divide(2.0)
-            } else {
-                Color::white()
-            }
-        } else {
-            Color::white()
-        }
+    fn color_at_blended(&self, point: &Point, a: &Patternable, b: &Patternable) -> Color {
+        a.color_at(&point).add(&b.color_at(&point)).divide(2.0)
     }
 }
 
