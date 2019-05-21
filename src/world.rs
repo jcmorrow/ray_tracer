@@ -63,7 +63,7 @@ impl World {
         );
 
         let reflected_color = self.reflected_color(&precompute, remaining);
-        let refracted_color = self.refracted_color_at(&precompute, remaining);
+        let refracted_color = self.refracted_color(&precompute, remaining);
 
         if precompute.object.material.transparency > 0.
             && precompute.object.material.reflective > 0.
@@ -86,7 +86,7 @@ impl World {
         }
     }
 
-    pub fn refracted_color_at(&self, precompute: &Precompute, remaining: i32) -> Color {
+    pub fn refracted_color(&self, precompute: &Precompute, remaining: i32) -> Color {
         if remaining == 0 {
             return Color::black();
         }
@@ -95,8 +95,8 @@ impl World {
         }
 
         // total internal reflection
-        let n_ratio = precompute.n1 / precompute.n2;
-        let cos_i = precompute.eyev.dot(&precompute.normalv);
+        let n_ratio = precompute.n2 / precompute.n1;
+        let cos_i = precompute.normalv.dot(&precompute.eyev);
         let sin2_t = n_ratio.powi(2) * (1. - cos_i.powi(2));
         if sin2_t > 1. {
             return Color::black();
@@ -107,6 +107,7 @@ impl World {
             .normalv
             .multiply_scalar(n_ratio * cos_i - cos_t)
             .sub(&precompute.eyev.multiply_scalar(n_ratio));
+
         self.color_at(
             &Ray {
                 origin: precompute.under_point,
@@ -355,7 +356,7 @@ mod tests {
             },
         ];
         let comps = Intersection::precompute(&xs[0].clone(), &ray, xs);
-        let color = w.refracted_color_at(&comps, 5);
+        let color = w.refracted_color(&comps, 5);
 
         assert_eq!(color, Color::black());
     }
@@ -394,7 +395,7 @@ mod tests {
             },
         ];
         let comps = Intersection::precompute(&xs[0].clone(), &ray, xs);
-        let color = w.refracted_color_at(&comps, 0);
+        let color = w.refracted_color(&comps, 0);
 
         assert_eq!(color, Color::black());
     }
@@ -433,8 +434,51 @@ mod tests {
             },
         ];
         let comps = Intersection::precompute(&xs[1].clone(), &ray, xs);
-        let color = w.refracted_color_at(&comps, 0);
+        let color = w.refracted_color(&comps, 0);
 
         assert_eq!(color, Color::black());
     }
+
+    // #[test]
+    // fn test_refracted_color_with_refracted_ray() {
+    //     let mut w = World::new();
+    //     let a = Arc::new(Shape {
+    //         intersectable: Intersectable::sphere(),
+    //         material: Material {
+    //             ambient: 1.0,
+    //             diffuse: 0.7,
+    //             pattern: Patternable::solid(Color::new(0.8, 1.0, 0.6)),
+    //             reflective: 0.,
+    //             refractive_index: 1.,
+    //             shininess: 200.,
+    //             specular: 0.2,
+    //             transparency: 0.,
+    //         },
+    //         parent: None,
+    //         transform: IDENTITY_MATRIX,
+    //     });
+    //     let b = Arc::new(Shape {
+    //         intersectable: Intersectable::sphere(),
+    //         material: Material {
+    //             ambient: 0.1,
+    //             diffuse: 0.7,
+    //             pattern: Patternable::solid(Color::new(0.8, 1.0, 0.6)),
+    //             reflective: 0.,
+    //             refractive_index: 1.5,
+    //             shininess: 200.,
+    //             specular: 0.2,
+    //             transparency: 1.,
+    //         },
+    //         parent: None,
+    //         transform: Matrix4::scaling(0.5, 0.5, 0.5),
+    //     });
+    //     w.objects = vec![a, b];
+
+    //     let r = Ray {
+    //         direction: vector(0., 1., 0.),
+    //         origin: point(0., 0., 0.1),
+    //     };
+
+    //     let xs: Vec<Intersection> = vec![Intersection {}];
+    // }
 }
